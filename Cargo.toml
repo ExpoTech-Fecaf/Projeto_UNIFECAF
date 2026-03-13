@@ -1,6 +1,16 @@
 [package]
-name = "projetoSemestral"
+name = "gerenciamento_de_estoque"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# Serialização/Deserialização
+serde = {version = "1.0", features = ["derive"]}
+serde_json = "1.0"
+
+# hashing_senhas
+bcrypt = "0.14.0"
+
+# logging
+log = "0.4"
+env_logger = "0.11"
