@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use gerenciamento_de_estoque::models::user::{User, UserType};
 use gerenciamento_de_estoque::services::auth_service;
 
@@ -28,14 +29,17 @@ fn test_authenticate_user(){
     let user = vec![
         User{
             id: None,
-            username: "Icaro".to_string(),
+            username: "icaro".to_string(),
             password_hash: hashed_password,
             user_type: UserType::Admin,
+            first_name: "Icaro".to_string(),
+            last_name: "Rodrigues".to_string(),
+            birth_date: NaiveDate::from_ymd_opt(2006, 12, 13).unwrap(),
         }
     ];
 
     // Teste com credencias corretas
-    assert!(auth_service::authenticate_user(&user, "Icaro", "minha_senha").is_ok());
+    assert!(auth_service::authenticate_user(&user, "icaro", "minha_senha").is_ok());
     // Teste com a senha incorreta
     assert!(auth_service::authenticate_user(&user, "Icaro", "senha_incorreta").is_err());
     // Teste com usuário não encontrado
@@ -51,6 +55,9 @@ fn test_check_permission(){
         username: "Admin".to_string(),
         password_hash: "hash".to_string(),
         user_type: UserType::Admin,
+        first_name: "admin".to_string(),
+        last_name: "123".to_string(),
+        birth_date: NaiveDate::from_ymd_opt(2017, 01, 01).unwrap(),
     };
     // Criando um gerente
     let gerente = User {
@@ -58,6 +65,9 @@ fn test_check_permission(){
         username: "Gerente".to_string(),
         password_hash: "hash".to_string(),
         user_type: UserType::Gerente,
+        first_name: "Icaro".to_string(),
+        last_name: "Rodrigues".to_string(),
+        birth_date: NaiveDate::from_ymd_opt(2006, 12, 13).unwrap(),
     };
     // Criando um funcionário
     let funcionario = User {
@@ -65,6 +75,9 @@ fn test_check_permission(){
         username: "Funcionario".to_string(),
         password_hash: "hash".to_string(),
         user_type: UserType::Funcionario,
+        first_name: "Rafael".to_string(),
+        last_name: "Celestino".to_string(),
+        birth_date: NaiveDate::from_ymd_opt(2006, 08, 21).unwrap(),
     };
 
     // Admin tem permissão para tudo
