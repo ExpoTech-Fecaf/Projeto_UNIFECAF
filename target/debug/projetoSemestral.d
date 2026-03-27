@@ -1,0 +1,1 @@
+C:\Projeto_3_Semestre\Projeto_UNIFECAF\target\debug\projetoSemestral.exe: C:\Projeto_3_Semestre\Projeto_UNIFECAF\src\config\database.rs C:\Projeto_3_Semestre\Projeto_UNIFECAF\src\config\mod.rs C:\Projeto_3_Semestre\Projeto_UNIFECAF\src\main.rs

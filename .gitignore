@@ -1,1 +1,2 @@
-/target
+/target     #Pasta onde o Rust guarda os arquivos pesados de compilação (não precisa subir)
+.env        #Arquivo de configuração pessoal com senhas

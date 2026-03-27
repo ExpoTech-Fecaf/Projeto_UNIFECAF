@@ -1,6 +1,9 @@
 [package]
-name = "projetoSemestral"
+name = "projetoSemestral" 
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+sqlx = {version = "0.7", features = ["mysql", "runtime-tokio"]}         #sqlx: Biblioteca para comandos SQL (MySQL + execução assíncrona)
+tokio = {version = "1", features = ["full"]}                            #tokio: Necessário para o Rust processar tarefas em segundo plano
+dotenv = "0.15"                                                         #dotenv: faz a ponte entre o arquivo .env e o código Rust
