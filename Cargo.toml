@@ -1,6 +1,24 @@
 [package]
-name = "projetoSemestral"
+name = "gerenciamento_de_estoque"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# Serialização/Deserialização
+serde = {version = "1.0", features = ["derive", "serde_derive"]}
+serde_json = "1.0"
+
+#Banco de Dados e Async
+sqlx = {version = "0.7", features = ["mysql", "runtime-tokio"]}
+tokio = {version = "1", features = ["full"]}
+dotenv = "0.15"
+
+
+
+# hashing_senhas
+bcrypt = "0.14.0"
+
+# logging
+log = "0.4"
+env_logger = "0.11"
+chrono = { version = "0.4.44", features = ["serde"] }
