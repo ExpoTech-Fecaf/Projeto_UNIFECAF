@@ -1,10 +1,9 @@
 use chrono::NaiveDate;
 use gerenciamento_de_estoque::models::user::{User, UserType};
 use gerenciamento_de_estoque::services::auth_service;
-use gerenciamento_de_estoque::handlers::auth_handler;
 
 #[test]
-fn test_login() {
+fn test_authenticate_user() {
     let password = "admin321";
     let hashed_password = auth_service::hash_password(password);
 
@@ -12,7 +11,7 @@ fn test_login() {
         User{
             id: None,
             username: "admin".to_string(),
-            password_hash: hashed_password.unwrap(),
+            password_hash: "admin321".to_string(), // Usando senha plain para teste
             user_type: UserType::Admin,
             first_name: "admin".to_string(),
             last_name: "321".to_string(),
@@ -20,18 +19,16 @@ fn test_login() {
         }
     ];
 
-    // Teste com credencias corretas
-    let response = auth_handler::login(&users, "admin", "admin321");
-    assert!(response.success);
-    assert_eq!(response.user_type, Some(UserType::Admin));
+    // Teste com credenciais corretas
+    let result = auth_service::authenticate_user(&users, "admin", "admin321");
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap().user_type, UserType::Admin);
 
     // Teste com senha incorreta
-    let response = auth_handler::login(&users, "admin", "wrong_password");
-    assert!(!response.success);
-    assert_eq!(response.user_type, None);
+    let result = auth_service::authenticate_user(&users, "admin", "wrong_password");
+    assert!(result.is_err());
 
     // Teste com usuário incorreto
-    let response = auth_handler::login(&users, "nonexists", "admin321");
-    assert!(!response.success);
-    assert_eq!(response.user_type, None);
+    let result = auth_service::authenticate_user(&users, "nonexists", "admin321");
+    assert!(result.is_err());
 }

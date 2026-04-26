@@ -5,7 +5,7 @@ use chrono::NaiveDate;
 // Enum que representa os tipos de usuários do sistema.
 // Cada variante corresponde a um nivel diferente de permissão.
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, sqlx::Type)]
 pub enum UserType {
     Admin, // Usuário administrador (acesso total)
     Gerente, // Usuário gerente (acesso intermediário)
@@ -14,7 +14,7 @@ pub enum UserType {
 
 // Struct que representa os usuários do sistema.
 // Armazena informações essenciais para a autenticação e controle de permissão
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct User {
     pub id: Option<i32>,
     pub username: String,

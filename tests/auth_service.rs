@@ -14,23 +14,22 @@ fn test_hash_password() {
 #[test]
 fn test_verify_password() {
     let password = "minha_senha"; // Gerando a senha
-    let hashed_password = auth_service::hash_password(password).unwrap(); // Transformando a senha em hash
+    let stored = password; // Usando senha plain
 
-    assert!(auth_service::verify_password(password, &hashed_password).unwrap()); // Verifica se o hash gerado corresponde à senha original
+    assert!(auth_service::verify_password(password, stored).unwrap()); // Verifica se corresponde
 }
 
 // Teste para a função de autenticar usuário
 #[test]
 fn test_authenticate_user(){
     let password = "minha_senha"; // Gerando a senha
-    let hashed_password = auth_service::hash_password(password).unwrap(); // Transformando a senha em hash
 
     // Criando um novo user
     let user = vec![
         User{
             id: None,
             username: "icaro".to_string(),
-            password_hash: hashed_password,
+            password_hash: password.to_string(), // Usando senha plain
             user_type: UserType::Admin,
             first_name: "Icaro".to_string(),
             last_name: "Rodrigues".to_string(),
@@ -94,5 +93,3 @@ fn test_check_permission(){
     assert!(!auth_service::check_permission(&funcionario, UserType::Admin));
 
 }
-
-

@@ -1,12 +1,24 @@
-mod config; //declara o modulo 'config' para o Rust encontrar a pasta
+mod config;
 
-#[tokio::main]  //define que o 'main' pode rodar tarefas assíncronas
+#[tokio::main]
 async fn main() {
-    println!("Iniciando conexão");  //log informativo mo terminal
+    println!("Iniciando conexão");
 
-    //chama a funçaõ de conexão e aguarda (.await) o banco responder
     let pool = config::database::conectar_db().await;
 
-    //mensagem para a conexão bem-sucedida
     println!("Conexão com banco realizada com sucesso!");
+
+    // Adicionando uma rota para testar o login
+    use axum::{routing::post, Router};
+    use gerenciamento_de_estoque::handlers::auth_handler::login;
+    use axum::serve;
+    use tokio::net::TcpListener;
+
+    let app = Router::new()
+        .route("/test_login", post(login))
+        .with_state(pool);
+
+    let listener = TcpListener::bind("0.0.0.0:3000").await.unwrap();
+
+    serve(listener, app).await.unwrap();
 }
