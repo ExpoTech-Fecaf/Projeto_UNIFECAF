@@ -1,24 +1,51 @@
-mod config;
+use axum::serve;
+use tokio::net::TcpListener;
+use log::{info, error};
+use gerenciamento_de_estoque::config;
+use gerenciamento_de_estoque::routes;
 
 #[tokio::main]
 async fn main() {
-    println!("Iniciando conexão");
+    // Inicializar o logger
+    env_logger::init();
 
-    let pool = config::database::conectar_db().await;
+    info!("🚀 Iniciando aplicação de Gerenciamento de Estoque");
+    info!("📡 Conectando ao banco de dados...");
 
-    println!("Conexão com banco realizada com sucesso!");
+    // Conectar ao banco de dados
+    match config::database::conectar_db().await {
+        Ok(pool) => {
+            info!("✅ Conexão com banco de dados realizada com sucesso!");
 
-    // Adicionando uma rota para testar o login
-    use axum::{routing::post, Router};
-    use gerenciamento_de_estoque::handlers::auth_handler::login;
-    use axum::serve;
-    use tokio::net::TcpListener;
+            // Criar as rotas
+            let app = routes::route::criar_rotas()
+                .with_state(pool.clone());
 
-    let app = Router::new()
-        .route("/test_login", post(login))
-        .with_state(pool);
+            // Definir o endereço e porta
+            let addr = "0.0.0.0:3001";
+            let listener = match TcpListener::bind(addr).await {
+                Ok(listener) => {
+                    info!("🌐 Servidor iniciando em http://{}", addr);
+                    listener
+                }
+                Err(e) => {
+                    error!("❌ Erro ao fazer bind do servidor: {}", e);
+                    return;
+                }
+            };
 
-    let listener = TcpListener::bind("0.0.0.0:3000").await.unwrap();
-
-    serve(listener, app).await.unwrap();
+            // Iniciar o servidor
+            match serve(listener, app).await {
+                Ok(_) => info!("✅ Servidor finalizado"),
+                Err(e) => error!("❌ Erro ao executar servidor: {}", e),
+            }
+        }
+        Err(e) => {
+            error!("❌ Erro ao conectar no banco de dados: {}", e);
+            error!("Verifique se:");
+            error!("1. O arquivo .env está configurado com DATABASE_URL");
+            error!("2. O banco de dados está rodando");
+            error!("3. As credenciais estão corretas");
+        }
+    }
 }

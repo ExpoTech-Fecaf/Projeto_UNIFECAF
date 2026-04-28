@@ -1,5 +1,5 @@
 use crate::models::user::{User, UserType}; // Importações e uso do crates
-use bcrypt::{hash, verify, DEFAULT_COST}; // Importa as funções hash e verify
+use bcrypt::{hash, DEFAULT_COST}; // Importa a função hash e constante
 
 
 // Função para criptografar a senha

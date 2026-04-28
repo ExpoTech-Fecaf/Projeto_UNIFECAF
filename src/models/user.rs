@@ -23,12 +23,23 @@ pub struct User {
     pub first_name: String,
     pub last_name: String,
     pub birth_date: NaiveDate,
+    pub cpf: String,
+    pub role_id: i16,
 }
 
 impl User {
     // Cria o novo usuário com os dados fornecidos
     // O id é definido como 'None' pois novos usuários ainda não tem um id definido no banco de dados.
-    pub fn new(username: String, password_hash: String, user_type: UserType, first_name: String, last_name: String, birth_date: NaiveDate) -> Self {
+    pub fn new(
+        username: String,
+        password_hash: String,
+        user_type: UserType,
+        first_name: String,
+        last_name: String,
+        birth_date: NaiveDate,
+        cpf: String,
+        role_id: i16,
+    ) -> Self {
         Self {
             id: None,
             username,
@@ -37,6 +48,8 @@ impl User {
             first_name,
             last_name,
             birth_date,
+            cpf,
+            role_id,
         }
     }
 }

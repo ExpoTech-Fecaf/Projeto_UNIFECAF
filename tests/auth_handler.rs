@@ -5,7 +5,7 @@ use gerenciamento_de_estoque::services::auth_service;
 #[test]
 fn test_authenticate_user() {
     let password = "admin321";
-    let hashed_password = auth_service::hash_password(password);
+    let _hashed_password = auth_service::hash_password(password);
 
     let users = vec![
         User{
@@ -16,6 +16,8 @@ fn test_authenticate_user() {
             first_name: "admin".to_string(),
             last_name: "321".to_string(),
             birth_date: NaiveDate::from_ymd_opt(2006, 12, 13).unwrap(),
+            cpf: "00000000000".to_string(),
+            role_id: 1,
         }
     ];
 

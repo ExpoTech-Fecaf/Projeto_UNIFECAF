@@ -34,6 +34,8 @@ fn test_authenticate_user(){
             first_name: "Icaro".to_string(),
             last_name: "Rodrigues".to_string(),
             birth_date: NaiveDate::from_ymd_opt(2006, 12, 13).unwrap(),
+            cpf: "00000000000".to_string(),
+            role_id: 1,
         }
     ];
 
@@ -57,6 +59,8 @@ fn test_check_permission(){
         first_name: "admin".to_string(),
         last_name: "123".to_string(),
         birth_date: NaiveDate::from_ymd_opt(2017, 01, 01).unwrap(),
+        cpf: "00000000000".to_string(),
+        role_id: 1,
     };
     // Criando um gerente
     let gerente = User {
@@ -67,6 +71,8 @@ fn test_check_permission(){
         first_name: "Icaro".to_string(),
         last_name: "Rodrigues".to_string(),
         birth_date: NaiveDate::from_ymd_opt(2006, 12, 13).unwrap(),
+        cpf: "00000000000".to_string(),
+        role_id: 3,
     };
     // Criando um funcionário
     let funcionario = User {
@@ -77,6 +83,8 @@ fn test_check_permission(){
         first_name: "Rafael".to_string(),
         last_name: "Celestino".to_string(),
         birth_date: NaiveDate::from_ymd_opt(2006, 08, 21).unwrap(),
+        cpf: "00000000000".to_string(),
+        role_id: 2,
     };
 
     // Admin tem permissão para tudo
