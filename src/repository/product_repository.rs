@@ -6,7 +6,7 @@ pub struct ProductRepository;
 
 impl ProductRepository {
     pub async fn create(pool: &MySqlPool, product: &Product) -> Result<i32, sqlx::Error> {
-        sqlx::query(
+        let result = sqlx::query(
             r#"
             INSERT INTO produto (nome, valorcusto, valorvenda, estoqueatual, pesogramas, status, dataproducao, datavalidade)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -22,11 +22,8 @@ impl ProductRepository {
         .bind(product.expiration_date)
         .execute(pool)
         .await?;
-        let row = sqlx::query("SELECT LAST_INSERT_ID() as id")
-            .fetch_one(pool)
-            .await?;
-        let id: u64 = row.get("id");
-        Ok(id as i32)
+
+        Ok(result.last_insert_id() as i32)
     }
 
     pub async fn list(pool: &MySqlPool) -> Result<Vec<Product>, sqlx::Error> {
