@@ -1,3 +1,22 @@
-target/     #Pasta onde o Rust guarda os arquivos pesados de compilação (não precisa subir)
-.env      #Arquivo de configuração pessoal com senhas
+# Rust build artifacts
+/target/
+target/
+*.rlib
+*.rmeta
+*.pdb
+*.exe
+*.dll
+
+# Environment files
+.env
+.env.local
+
+# IDE
 /.idea
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
