@@ -1,0 +1,10 @@
+C:\Users\icaro\workspaces\WorkspaceFaculdade\gerenciamento_de_estoque\target\debug\deps\env_filter-8b12a39b621b199a.d: C:\Users\icaro\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\env_filter-1.0.1\src\lib.rs C:\Users\icaro\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\env_filter-1.0.1\src\directive.rs C:\Users\icaro\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\env_filter-1.0.1\src\filter.rs C:\Users\icaro\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\env_filter-1.0.1\src\filtered_log.rs C:\Users\icaro\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\env_filter-1.0.1\src\op.rs C:\Users\icaro\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\env_filter-1.0.1\src\parser.rs
+
+C:\Users\icaro\workspaces\WorkspaceFaculdade\gerenciamento_de_estoque\target\debug\deps\libenv_filter-8b12a39b621b199a.rmeta: C:\Users\icaro\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\env_filter-1.0.1\src\lib.rs C:\Users\icaro\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\env_filter-1.0.1\src\directive.rs C:\Users\icaro\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\env_filter-1.0.1\src\filter.rs C:\Users\icaro\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\env_filter-1.0.1\src\filtered_log.rs C:\Users\icaro\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\env_filter-1.0.1\src\op.rs C:\Users\icaro\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\env_filter-1.0.1\src\parser.rs
+
+C:\Users\icaro\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\env_filter-1.0.1\src\lib.rs:
+C:\Users\icaro\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\env_filter-1.0.1\src\directive.rs:
+C:\Users\icaro\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\env_filter-1.0.1\src\filter.rs:
+C:\Users\icaro\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\env_filter-1.0.1\src\filtered_log.rs:
+C:\Users\icaro\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\env_filter-1.0.1\src\op.rs:
+C:\Users\icaro\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\env_filter-1.0.1\src\parser.rs:
