@@ -1,1 +1,0 @@
-impl actix_web::dev::Service<actix_http::requests::request::Request, Response = ServiceResponse, Error = actix_web::Error>
