@@ -6,7 +6,7 @@ pub struct UserRepository;
 
 impl UserRepository {
     pub async fn create(pool: &MySqlPool, user: &User) -> Result<i32, sqlx::Error> {
-        sqlx::query(
+        let result = sqlx::query(
             r#"
             INSERT INTO usuario (nome, sobrenome, cpf, datanascimento, user, senha, fkidcargo)
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -21,11 +21,10 @@ impl UserRepository {
         .bind(user.role_id)
         .execute(pool)
         .await?;
-        let row = sqlx::query("SELECT LAST_INSERT_ID() as id")
-            .fetch_one(pool)
-            .await?;
-        let id: u64 = row.get("id");
-        Ok(id as i32)
+        
+        // Usa last_insert_id() do resultado para obter o ID corretamente
+        let id = result.last_insert_id() as i32;
+        Ok(id)
     }
 
     pub async fn list(pool: &MySqlPool) -> Result<Vec<User>, sqlx::Error> {

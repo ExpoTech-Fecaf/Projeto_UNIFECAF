@@ -1,10 +1,10 @@
 use crate::models::user::{User, UserType};
 use crate::services::auth_service;
 use crate::services::user_service::UserService;
+use crate::validators::user_validator::UserValidator;
 use axum::extract::{State, Json};
 use sqlx::MySqlPool;
 use sqlx::Row;
-use chrono::NaiveDate;
 
 // Estrutura para representar uma requisição de login
 #[derive(serde::Deserialize)]
@@ -96,11 +96,39 @@ pub async fn register(
     State(pool): State<MySqlPool>,
     Json(payload): Json<RegisterRequest>,
 ) -> Json<RegisterResponse> {
-    let birth_date = match NaiveDate::parse_from_str(&payload.birth_date, "%Y-%m-%d") {
-        Ok(date) => date,
-        Err(_) => return Json(RegisterResponse {
+    // Validação 1: Username único
+    if let Err(e) = UserValidator::validate_username_unique(&pool, &payload.username).await {
+        return Json(RegisterResponse {
             success: false,
-            message: "Data de nascimento inválida".to_string(),
+            message: e.message,
+            user_id: None,
+        });
+    }
+
+    // Validação 2: Role ID válido
+    if let Err(e) = UserValidator::validate_role_id(payload.role_id) {
+        return Json(RegisterResponse {
+            success: false,
+            message: e.message,
+            user_id: None,
+        });
+    }
+
+    // Validação 3: CPF válido
+    if let Err(e) = UserValidator::validate_cpf(&payload.cpf) {
+        return Json(RegisterResponse {
+            success: false,
+            message: e.message,
+            user_id: None,
+        });
+    }
+
+    // Validação 4: Data no formato dd/mm/YYYY
+    let birth_date = match UserValidator::validate_and_parse_date(&payload.birth_date) {
+        Ok(date) => date,
+        Err(e) => return Json(RegisterResponse {
+            success: false,
+            message: e.message,
             user_id: None,
         }),
     };
