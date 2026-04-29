@@ -1,0 +1,1 @@
+Remove target/ from git tracking as it contains build artifacts

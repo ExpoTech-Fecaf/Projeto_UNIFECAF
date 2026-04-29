@@ -17,6 +17,9 @@ target/
 *.swp
 *.swo
 
+# GIT
+/.git-rewrite/
+
 # OS
 .DS_Store
 Thumbs.db

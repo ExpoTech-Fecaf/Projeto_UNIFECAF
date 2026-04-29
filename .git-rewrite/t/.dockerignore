@@ -1,0 +1,23 @@
+# Rust build artifacts
+target/
+Cargo.lock
+
+# Git
+.git/
+.gitignore
+
+# Environment
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs and temp
+*.log
+flycheck0/
+tmp/
