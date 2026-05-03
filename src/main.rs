@@ -13,12 +13,12 @@ async fn main() {
     info!("📡 Conectando ao banco de dados...");
 
     // Conectar ao banco de dados
-    match config::database::conectar_db().await {
+    match config::database::connect_db().await {
         Ok(pool) => {
             info!("✅ Conexão com banco de dados realizada com sucesso!");
 
             // Criar as rotas
-            let app = routes::route::criar_rotas()
+            let app = routes::route::create_routes()
                 .with_state(pool.clone());
 
             // Definir o endereço e porta

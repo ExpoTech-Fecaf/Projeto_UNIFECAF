@@ -12,7 +12,8 @@ estoqueatual int default 0,
 pesogramas int,
 status enum ('1' ,'2'),
 dataproducao date not null,
-datavalidade date not null
+datavalidade date not null,
+data_entrada date not null
 )
 
 Create table cargo (

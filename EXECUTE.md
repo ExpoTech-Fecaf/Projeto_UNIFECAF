@@ -14,7 +14,7 @@ Seu projeto já está **100% pronto** para rodar com o Railway!
 
 ### ⚠️ IMPORTANTE (Primeira Execução)
 
-Se é a **primeira vez** executando com este banco, você precisa criar as tabelas. Execute o SQL em `src/database/db_estoque.sql` no seu Railway:
+Se é a **primeira vez** executando com este banco, você precisa criar/atualizar as tabelas. Execute o SQL em `src/database/db_estoque.sql` no seu Railway:
 
 **Passo 1:** Acesse seu [Dashboard do Railway](https://railway.app)
 
@@ -25,6 +25,10 @@ Se é a **primeira vez** executando com este banco, você precisa criar as tabel
 **Passo 4:** Cole e execute este SQL completo:
 
 ```sql
+-- Adicionar coluna data_entrada à tabela produto (se não existir)
+ALTER TABLE produto ADD COLUMN data_entrada DATE NOT NULL DEFAULT CURDATE();
+
+-- Ou crie as tabelas do zero:
 CREATE TABLE cargo (
     id int auto_increment primary key,
     nome varchar (70) not null
@@ -51,7 +55,8 @@ CREATE TABLE produto (
     pesogramas int,
     status enum ('1' ,'2'),
     dataproducao date not null,
-    datavalidade date not null
+    datavalidade date not null,
+    data_entrada date not null
 );
 
 INSERT INTO cargo (nome) VALUES ('Admin'), ('Funcionario'), ('Gerente');
