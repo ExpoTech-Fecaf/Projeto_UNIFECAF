@@ -51,6 +51,7 @@ pub async fn create_product(
         status,
         production_date,
         expiration_date,
+        entry_date: chrono::Local::now().naive_local().date(),
     };
 
     match ProductService::create_product(&pool, product).await {

@@ -23,7 +23,7 @@ async fn stock_exit() -> impl IntoResponse {
 }
 
 // Função que organiza a estrutura das rotas principais da API
-pub fn criar_rotas() -> Router<MySqlPool> {
+pub fn create_routes() -> Router<MySqlPool> {
     Router::new()
         // Rota de Health Check
         .route("/", get(health_check))
