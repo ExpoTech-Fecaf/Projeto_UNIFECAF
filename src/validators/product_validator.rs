@@ -12,7 +12,7 @@ impl ProductValidator {
             return Err(ValidationError::new("name", "O nome do produto não pode ficar em branco"));
         }
 
-        let result = sqlx::query("SELECT id FROM produto WHERE LOWER(nome) = LOWER(?)")
+        let result = sqlx::query("SELECT id FROM products WHERE LOWER(name) = LOWER(?)")
             .bind(name)
             .fetch_optional(pool)
             .await;

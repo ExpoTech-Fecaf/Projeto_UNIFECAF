@@ -1,4 +1,5 @@
-use axum::extract::{State, Json};
+use axum::extract::{State, Path, Json};
+use axum::http::StatusCode;
 use sqlx::MySqlPool;
 use serde_json::json;
 use crate::models::product::Product;
@@ -18,6 +19,7 @@ pub struct CreateProductRequest {
     pub expiration_date: String,
 }
 
+// Criar produto
 pub async fn create_product(
     State(pool): State<MySqlPool>,
     Json(req): Json<CreateProductRequest>,
@@ -42,7 +44,7 @@ pub async fn create_product(
     };
 
     let product = Product {
-        id: 0, // Will be ignored
+        id: 0,
         name: req.name.trim().to_string(),
         cost_price: req.cost_price,
         sale_price: req.sale_price,
@@ -57,5 +59,73 @@ pub async fn create_product(
     match ProductService::create_product(&pool, product).await {
         Ok(id) => Json(json!({"success": true, "message": "Produto criado com sucesso", "id": id})),
         Err(e) => Json(json!({"success": false, "message": format!("Erro ao criar produto: {:?}", e)})),
+    }
+}
+
+// Listar produtos
+pub async fn list_products(State(pool): State<MySqlPool>) -> Json<Vec<Product>> {
+    match ProductService::list_products(&pool).await {
+        Ok(products) => Json(products),
+        Err(_) => Json(vec![]),
+    }
+}
+
+// Buscar produto por ID
+pub async fn get_product(
+    State(pool): State<MySqlPool>,
+    Path(id): Path<i32>,
+) -> Result<Json<Product>, (StatusCode, Json<serde_json::Value>)> {
+    match ProductService::list_products(&pool).await {
+        Ok(products) => {
+            if let Some(product) = products.into_iter().find(|p| p.id == id) {
+                Ok(Json(product))
+            } else {
+                Err((StatusCode::NOT_FOUND, Json(json!({"message": "Produto não encontrado"}))))
+            }
+        }
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"message": e.to_string()}))))
+    }
+}
+
+// Atualizar produto
+pub async fn update_product(
+    State(pool): State<MySqlPool>,
+    Path(id): Path<i32>,
+    Json(mut payload): Json<Product>,
+) -> Json<serde_json::Value> {
+    payload.id = id;
+
+    let existing_products = ProductService::list_products(&pool).await.unwrap_or_default();
+    if existing_products.iter().any(|p| p.name.to_lowercase() == payload.name.to_lowercase() && p.id != id) {
+        return Json(json!({
+            "success": false, 
+            "message": "Já existe outro produto com este nome"
+        }));
+    }
+
+    if let Err(e) = ProductValidator::validate_status(payload.status) {
+        return Json(json!({"success": false, "message": e.message}));
+    }
+
+    match ProductService::update_product(&pool, payload).await {
+        Ok(_) => Json(json!({
+            "success": true,
+            "message": "Produto atualizado com sucesso"
+        })),
+        Err(e) => Json(json!({
+            "success": false,
+            "message": format!("Erro ao atualizar no banco: {}", e)
+        })),
+    }
+}
+
+// Deletar produto
+pub async fn delete_product(
+    State(pool): State<MySqlPool>,
+    Path(id): Path<i32>,
+) -> StatusCode {
+    match ProductService::delete_product(&pool, id).await {
+        Ok(_) => StatusCode::NO_CONTENT,
+        Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
     }
 }

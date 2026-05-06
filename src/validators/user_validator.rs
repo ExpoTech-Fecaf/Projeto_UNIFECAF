@@ -23,7 +23,7 @@ pub struct UserValidator;
 impl UserValidator {
     /// Valida se o username é único no banco de dados
     pub async fn validate_username_unique(pool: &MySqlPool, username: &str) -> Result<(), ValidationError> {
-        let result = sqlx::query("SELECT id FROM usuario WHERE user = ?")
+        let result = sqlx::query("SELECT id FROM users WHERE username = ?")
             .bind(username)
             .fetch_optional(pool)
             .await;

@@ -5,6 +5,8 @@ use crate::validators::user_validator::UserValidator;
 use axum::extract::{State, Json};
 use sqlx::MySqlPool;
 use sqlx::Row;
+use axum::extract::Path;
+use crate::repository::user_repository::UserRepository;
 
 // Estrutura para representar uma requisição de login
 #[derive(serde::Deserialize)]
@@ -172,5 +174,108 @@ pub async fn register(
             message: format!("Erro ao registrar usuário: {:?}", e),
             user_id: None,
         }),
+    }
+}
+
+// Função para listar todos os usuários
+pub async fn list_users(
+    State(pool): State<MySqlPool>,
+) -> Json<Vec<User>> {
+    match UserService::list_users(&pool).await {
+        Ok(users) => Json(users),
+        Err(_) => Json(vec![]), // Retorna lista vazia em caso de erro
+    }
+}
+
+pub async fn update_user(
+    State(pool): State<MySqlPool>,
+    Path(id): Path<i32>,
+    Json(mut payload): Json<User>,
+) -> Json<RegisterResponse> {
+    payload.id = Some(id);
+
+    // 1. Validação de Role ID
+    if let Err(e) = UserValidator::validate_role_id(payload.role_id) {
+        return Json(RegisterResponse { success: false, message: e.message, user_id: None });
+    }
+
+    // 2. Validação de CPF (Formato e Dígitos)
+    if let Err(e) = UserValidator::validate_cpf(&payload.cpf) {
+        return Json(RegisterResponse { success: false, message: e.message, user_id: None });
+    }
+
+    // 3. Validação de Username Único (Corrigido para coluna 'username')
+    let existing_username = sqlx::query("SELECT id FROM users WHERE username = ? AND id != ?")
+        .bind(&payload.username)
+        .bind(id)
+        .fetch_optional(&pool)
+        .await;
+
+    if let Ok(Some(_)) = existing_username {
+        return Json(RegisterResponse {
+            success: false,
+            message: "Este nome de usuário já está sendo usado por outra pessoa".to_string(),
+            user_id: None,
+        });
+    }
+
+    // 4. Validação de CPF Único (Importante!)
+    let existing_cpf = sqlx::query("SELECT id FROM users WHERE cpf = ? AND id != ?")
+        .bind(&payload.cpf)
+        .bind(id)
+        .fetch_optional(&pool)
+        .await;
+
+    if let Ok(Some(_)) = existing_cpf {
+        return Json(RegisterResponse {
+            success: false,
+            message: "Este CPF já está cadastrado para outro usuário".to_string(),
+            user_id: None,
+        });
+    }
+
+    // 5. Mapeamento do UserType
+    payload.user_type = match payload.role_id {
+        1 => UserType::Admin,
+        2 => UserType::Funcionario,
+        3 => UserType::Gerente,
+        _ => UserType::Funcionario,
+    };
+
+    // 6. Executa a atualização
+    match UserService::update_user(&pool, payload).await {
+        Ok(_) => Json(RegisterResponse {
+            success: true,
+            message: "Usuário atualizado com sucesso".to_string(),
+            user_id: Some(id),
+        }),
+        Err(e) => Json(RegisterResponse {
+            success: false,
+            message: format!("Erro ao atualizar no banco: {}", e),
+            user_id: None,
+        }),
+    }
+}
+
+// Buscar usuário por ID
+pub async fn get_user(
+    State(pool): State<MySqlPool>,
+    Path(id): Path<i32>,
+) -> Result<Json<User>, (axum::http::StatusCode, String)> {
+    match UserRepository::get_by_id(&pool, id).await {
+        Ok(Some(user)) => Ok(Json(user)),
+        Ok(None) => Err((axum::http::StatusCode::NOT_FOUND, "Usuário não encontrado".into())),
+        Err(e) => Err((axum::http::StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
+// Deletar usuário
+pub async fn delete_user(
+    State(pool): State<MySqlPool>,
+    Path(id): Path<i32>,
+) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+    match UserService::delete_user(&pool, id).await {
+        Ok(_) => Ok(axum::http::StatusCode::NO_CONTENT),
+        Err(e) => Err((axum::http::StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }

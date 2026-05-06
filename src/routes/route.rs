@@ -1,8 +1,9 @@
 // Função que organiza a estrutura das rotas principais da API
-use axum::{routing::{get, post}, Router, response::IntoResponse, Json};
+use axum::{routing::{get, post, put, delete}, Router, response::IntoResponse, Json};
 use serde_json::json;
 use crate::handlers::auth_handler;
 use crate::handlers::product_handler;
+use crate::handlers::stock_handler;
 use sqlx::MySqlPool;
 
 // Handlers simples para demonstração
@@ -10,17 +11,6 @@ async fn health_check() -> impl IntoResponse {
     Json(json!({"status": "ok", "message": "API is running"}))
 }
 
-async fn product_list() -> impl IntoResponse {
-    Json(json!({"message": "Produtos listados com sucesso"}))
-}
-
-async fn stock_entry() -> impl IntoResponse {
-    Json(json!({"message": "Entrada de estoque registrada"}))
-}
-
-async fn stock_exit() -> impl IntoResponse {
-    Json(json!({"message": "Saída de estoque registrada"}))
-}
 
 // Função que organiza a estrutura das rotas principais da API
 pub fn create_routes() -> Router<MySqlPool> {
@@ -28,17 +18,25 @@ pub fn create_routes() -> Router<MySqlPool> {
         // Rota de Health Check
         .route("/", get(health_check))
 
-        // Rota para login de usuário
+        // Rota usuário
         .route("/login", post(auth_handler::login))
-
-        // Rota para registro de usuário
         .route("/register", post(auth_handler::register))
+        .route("/users/update/{id}", put(auth_handler::update_user))
+        .route("/users/{id}", get(auth_handler::get_user))
+        .route("/users/delete/{id}", delete(auth_handler::delete_user))
+
+        // Rota para listar usuários (apenas para demonstração, deve ser protegida em produção)
+        .route("/users", get(auth_handler::list_users))
 
         // Rotas para produtos
-        .route("/produtos", get(product_list))
-        .route("/produtos/criar", post(product_handler::create_product))
+        .route("/products", get(product_handler::list_products))
+        .route("/products/create", post(product_handler::create_product))
+        .route("/products/update/{id}", put(product_handler::update_product))
+        .route("/products/delete/{id}", delete(product_handler::delete_product))
+        .route("/products/{id}", get(product_handler::get_product))
 
         // Rotas para movimentação de estoque
-        .route("/estoque/entrada", post(stock_entry))
-        .route("/estoque/saida", post(stock_exit))
+        .route("/products/stock/entry", post(stock_handler::stock_entry))
+        .route("/products/stock/exit", post(stock_handler::stock_exit))
+        .route("/products/stock/{name}", get(stock_handler::get_stock))
 }
