@@ -20,4 +20,8 @@ impl UserService {
     pub async fn delete_user(pool: &MySqlPool, id: i32) -> Result<(), sqlx::Error> {
         UserRepository::delete(pool, id).await
     }
+
+    pub async fn promote_user(pool: &MySqlPool, id: i32, new_role_id: i16) -> Result<(), sqlx::Error> {
+        UserRepository::promote_user(pool, id, new_role_id).await
+    }
 }

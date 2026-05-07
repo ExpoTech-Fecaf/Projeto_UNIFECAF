@@ -7,6 +7,8 @@ use sqlx::MySqlPool;
 use sqlx::Row;
 use axum::extract::Path;
 use crate::repository::user_repository::UserRepository;
+use axum::Extension;
+use axum::http::StatusCode;
 
 // Estrutura para representar uma requisição de login
 #[derive(serde::Deserialize)]
@@ -50,7 +52,7 @@ pub async fn login(
 ) -> Json<LoginResponse> {
     // Load users from DB
     let users: Vec<User> = sqlx::query(
-        "SELECT id, user as username, senha as password_hash, CASE fkidcargo WHEN 1 THEN 'Admin' WHEN 2 THEN 'Funcionario' WHEN 3 THEN 'Gerente' END as user_type, nome as first_name, sobrenome as last_name, datanascimento as birth_date, cpf, fkidcargo as role_id FROM usuario",
+        "SELECT id, username, password_hash, CASE role_id WHEN 1 THEN 'Admin' WHEN 2 THEN 'Funcionario' WHEN 3 THEN 'Gerente' END as user_type, first_name, last_name, birth_date, cpf, role_id FROM users",
     )
     .fetch_all(&pool)
     .await
@@ -58,9 +60,9 @@ pub async fn login(
     .into_iter()
     .map(
         |row| {
-            let user_id: u64 = row.get("id");
+            let user_id: i32 = row.get("id");
             User {
-                id: Some(user_id as i32),
+                id: Some(user_id),
                 username: row.get("username"),
                 password_hash: row.get("password_hash"),
                 user_type: match row.get::<String, _>("user_type").as_str() {
@@ -211,6 +213,17 @@ pub async fn update_user(
         .fetch_optional(&pool)
         .await;
 
+    if !payload.password_hash.is_empty() {
+        match auth_service::hash_password(&payload.password_hash) {
+            Ok(hashed) => payload.password_hash = hashed,
+            Err(_) => return Json(RegisterResponse {
+                success: false,
+                message: "Erro ao processar a criptografia da senha".to_string(),
+                user_id: None,
+            }),
+        }
+    }
+
     if let Ok(Some(_)) = existing_username {
         return Json(RegisterResponse {
             success: false,
@@ -277,5 +290,41 @@ pub async fn delete_user(
     match UserService::delete_user(&pool, id).await {
         Ok(_) => Ok(axum::http::StatusCode::NO_CONTENT),
         Err(e) => Err((axum::http::StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
+
+// Função para promover um usuário a um novo tipo (Admin, Gerente, Funcionario)
+#[derive(serde::Deserialize)]
+pub struct PromoteRequest {
+    pub users_id: i32,
+    pub new_role_id: i16,
+}
+
+pub async fn promote_user(
+    State(pool): State<MySqlPool>,
+    Extension(user): Extension<User>,
+    Json(payload): Json<PromoteRequest>,
+) -> Result<Json<RegisterResponse>, (StatusCode, String)>{
+
+    // Chama check_permission para verificar exigindo nível de Admin
+    if !auth_service::check_permission(&user, UserType::Admin) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            "Access denied: Somente administradores podem promover usuários".to_string(),
+        ));
+    }
+
+    // Se aprovado, chama o serviço de promoção
+    match UserService::promote_user(&pool, payload.users_id, payload.new_role_id).await {
+        Ok(_) => Ok(Json(RegisterResponse {
+            success: true,
+            message: "Usuário promovido com sucesso".to_string(),
+            user_id: Some(payload.users_id),
+        })),
+        Err(e) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Erro ao promover usuário: {}", e),
+        ))
     }
 }

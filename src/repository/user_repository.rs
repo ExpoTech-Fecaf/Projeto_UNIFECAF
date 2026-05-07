@@ -137,4 +137,13 @@ impl UserRepository {
         }
     }
 
+    pub async fn promote_user(pool: &MySqlPool, user_id: i32, new_role_id: i16) -> Result<(), sqlx::Error> {
+        sqlx::query("UPDATE users SET role_id = ? WHERE id = ?")
+            .bind(new_role_id)
+            .bind(user_id)
+            .execute(pool)
+            .await?;
+        Ok(())
+    }
+
 }
