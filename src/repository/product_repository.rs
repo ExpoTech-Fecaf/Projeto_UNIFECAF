@@ -130,3 +130,83 @@ impl ProductRepository {
         Ok(())
     }
 }
+
+
+// ============================
+// RELATÓRIO DE ESTOQUE
+// ============================
+
+use serde::{Serialize, Deserialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BatchReport {
+    pub id: i32,
+    pub quantity: i32,
+    pub entry_date: chrono::NaiveDate,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StockReport {
+    pub product_id: i32,
+    pub product_name: String,
+    pub status: i16,
+    pub total_stock: i32,
+    pub batches: Vec<BatchReport>,
+}
+
+impl ProductRepository {
+
+    // Relatório completo de estoque
+    pub async fn stock_report(
+        pool: &MySqlPool,
+    ) -> Result<Vec<StockReport>, sqlx::Error> {
+
+        let products = Self::list(pool).await?;
+
+        let mut reports = Vec::new();
+
+        for product in products {
+
+            let batches = Self::find_batches_by_name(pool, &product.name).await?;
+
+            let total_stock: i32 =
+                batches.iter().map(|b| b.current_stock).sum();
+
+            let batch_reports = batches
+                .into_iter()
+                .map(|b| BatchReport {
+                    id: b.id,
+                    quantity: b.current_stock,
+                    entry_date: b.entry_date,
+                })
+                .collect();
+
+            reports.push(StockReport {
+                product_id: product.id,
+                product_name: product.name,
+                status: product.status,
+                total_stock,
+                batches: batch_reports,
+            });
+        }
+
+        Ok(reports)
+    }
+
+    // Produtos com estoque crítico
+    pub async fn critical_stock(
+        pool: &MySqlPool,
+    ) -> Result<Vec<StockReport>, sqlx::Error> {
+
+        let reports = Self::stock_report(pool).await?;
+
+        let critical: Vec<StockReport> = reports
+            .into_iter()
+            .filter(|p| p.total_stock <= 5)
+            .collect();
+
+        Ok(critical)
+    }
+}
+
+

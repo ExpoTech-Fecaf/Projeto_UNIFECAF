@@ -93,3 +93,47 @@ pub async fn get_stock(
         Err(_) => Json(json!({"success": false, "message": "Produto não encontrado"})),
     }
 }
+
+
+
+// ============================
+// RELATÓRIOS
+// ============================
+
+// Relatório completo
+pub async fn stock_report(
+    State(pool): State<MySqlPool>,
+) -> Json<serde_json::Value> {
+
+    match stock_service::gerar_relatorio_estoque(&pool).await {
+
+        Ok(report) => Json(json!({
+            "success": true,
+            "data": report
+        })),
+
+        Err(e) => Json(json!({
+            "success": false,
+            "message": e
+        })),
+    }
+}
+
+// Estoque crítico
+pub async fn critical_stock_report(
+    State(pool): State<MySqlPool>,
+) -> Json<serde_json::Value> {
+
+    match stock_service::produtos_estoque_critico(&pool).await {
+
+        Ok(report) => Json(json!({
+            "success": true,
+            "data": report
+        })),
+
+        Err(e) => Json(json!({
+            "success": false,
+            "message": e
+        })),
+    }
+}

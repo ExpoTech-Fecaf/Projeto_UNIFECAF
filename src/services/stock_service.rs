@@ -135,3 +135,29 @@ pub async fn retirar_estoque(pool: &MySqlPool, produto_id: i32, mut quantidade: 
 
     Ok(())
 }
+
+
+
+// ============================
+// RELATÓRIOS
+// ============================
+
+use crate::repository::product_repository::StockReport;
+
+pub async fn gerar_relatorio_estoque(
+    pool: &MySqlPool,
+) -> Result<Vec<StockReport>, String> {
+
+    ProductRepository::stock_report(pool)
+        .await
+        .map_err(|_| "Erro ao gerar relatório".to_string())
+}
+
+pub async fn produtos_estoque_critico(
+    pool: &MySqlPool,
+) -> Result<Vec<StockReport>, String> {
+
+    ProductRepository::critical_stock(pool)
+        .await
+        .map_err(|_| "Erro ao buscar estoque crítico".to_string())
+}
