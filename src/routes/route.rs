@@ -42,6 +42,12 @@ pub fn create_routes() -> Router<MySqlPool> {
         .route("/products/stock/entry", post(stock_handler::stock_entry))
         .route("/products/stock/exit", post(stock_handler::stock_exit))
         .route("/products/stock/{name}", get(stock_handler::get_stock))
+
+        // Histórico de movimentações
+        .route("/movements", get(stock_handler::list_movements))
+        .route("/movements/product/{product_id}", get(stock_handler::list_movements_by_product))
+
+        // Relatórios
         .route("/reports/stock", get(stock_handler::stock_report))
         .route("/reports/critical", get(stock_handler::critical_stock_report))
 }
