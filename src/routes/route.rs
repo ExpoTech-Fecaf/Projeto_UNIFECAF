@@ -24,9 +24,12 @@ pub fn create_routes() -> Router<MySqlPool> {
         .route("/users/update/{id}", put(auth_handler::update_user))
         .route("/users/{id}", get(auth_handler::get_user))
         .route("/users/delete/{id}", delete(auth_handler::delete_user))
+        .route("/users/promote", post(auth_handler::promote_user))
 
         // Rota para listar usuários (apenas para demonstração, deve ser protegida em produção)
         .route("/users", get(auth_handler::list_users))
+
+
 
         // Rotas para produtos
         .route("/products", get(product_handler::list_products))

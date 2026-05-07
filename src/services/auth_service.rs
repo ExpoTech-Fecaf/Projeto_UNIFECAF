@@ -27,11 +27,5 @@ pub fn authenticate_user<'a>(users: &'a [User], username: &'a str, password: &'a
 
 // Função para verificar as permissões do usuário:
 pub fn check_permission(user: &User, required_type: UserType) -> bool {
-    match (user.user_type.clone(), required_type) {
-        (UserType::Admin, _) => true, // Admin tem permissão para tudo
-        (UserType::Gerente, UserType::Funcionario) => true, // Gerente tem permissão para Funcionári
-        (UserType::Gerente, UserType::Gerente) => true, // Gerente tem permissão para Gerente
-        (UserType::Funcionario, UserType::Funcionario) => true, // Funcionário tem permissão para Funcionario
-        _ => false,
-    }
+    user.user_type.nivel() >= required_type.nivel()
 }

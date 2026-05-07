@@ -12,6 +12,17 @@ pub enum UserType {
     Funcionario // Usuário funcionário (acesso básico)
 }
 
+impl UserType {
+    // Converte uma string para o tipo UserType correspondente.
+    pub fn nivel(&self) -> i16 {
+        match self {
+            UserType::Admin => 3,
+            UserType::Gerente => 2,
+            UserType::Funcionario => 1,
+        }
+    }
+}
+
 // Struct que representa os usuários do sistema.
 // Armazena informações essenciais para a autenticação e controle de permissão
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
