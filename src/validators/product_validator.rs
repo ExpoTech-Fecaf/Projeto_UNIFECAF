@@ -2,9 +2,14 @@ use chrono::NaiveDate;
 use sqlx::MySqlPool;
 use crate::validators::user_validator::ValidationError;
 
+/// Validador de dados de produto.
+///
+/// Garante integridade dos dados antes da persistência:
+/// nome único, status válido e datas no formato correto.
 pub struct ProductValidator;
 
 impl ProductValidator {
+    /// Valida se o nome do produto é único no banco (case-insensitive).
     pub async fn validate_name_unique(pool: &MySqlPool, name: &str) -> Result<(), ValidationError> {
         let name = name.trim();
 
@@ -30,6 +35,7 @@ impl ProductValidator {
         }
     }
 
+    /// Valida se o status é válido (1 = ativo, 2 = inativo).
     pub fn validate_status(status: i16) -> Result<i16, ValidationError> {
         match status {
             1 | 2 => Ok(status),
@@ -40,6 +46,7 @@ impl ProductValidator {
         }
     }
 
+    /// Valida e converte uma string de data no formato `dd/mm/YYYY` para `NaiveDate`.
     pub fn validate_and_parse_date(date_str: &str, field: &str) -> Result<NaiveDate, ValidationError> {
         let date_str = date_str.trim();
 

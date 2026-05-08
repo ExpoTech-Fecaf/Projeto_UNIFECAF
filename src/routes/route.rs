@@ -1,3 +1,8 @@
+//! Definição das rotas HTTP da API.
+//!
+//! Organiza todos os endpoints agrupados por domínio:
+//! usuários, produtos, estoque, movimentações e relatórios.
+
 // Função que organiza a estrutura das rotas principais da API
 use axum::{routing::{get, post, put, delete}, Router, response::IntoResponse, Json};
 use serde_json::json;
@@ -6,13 +11,12 @@ use crate::handlers::product_handler;
 use crate::handlers::stock_handler;
 use sqlx::MySqlPool;
 
-// Handlers simples para demonstração
+/// Handler de health check — retorna status da API.
 async fn health_check() -> impl IntoResponse {
     Json(json!({"status": "ok", "message": "API is running"}))
 }
 
-
-// Função que organiza a estrutura das rotas principais da API
+/// Cria e retorna o router com todas as rotas da aplicação.
 pub fn create_routes() -> Router<MySqlPool> {
     Router::new()
         // Rota de Health Check
@@ -50,4 +54,6 @@ pub fn create_routes() -> Router<MySqlPool> {
         // Relatórios
         .route("/reports/stock", get(stock_handler::stock_report))
         .route("/reports/critical", get(stock_handler::critical_stock_report))
+        .route("/reports/alerts", get(stock_handler::consumption_alert))
+        .route("/reports/low-stock", get(stock_handler::low_stock_warnings))
 }

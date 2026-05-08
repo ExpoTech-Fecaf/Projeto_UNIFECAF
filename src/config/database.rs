@@ -1,15 +1,24 @@
+//! Configuração de conexão com o banco de dados MySQL.
+//!
+//! Utiliza variável de ambiente `DATABASE_URL` definida no arquivo `.env`.
+
 use std::env;
 use dotenv::dotenv;
-// Importa o gerenciador de conexões MySQL
-use sqlx::MySqlPool;   // importa o gerenciador de conexões MySQL
+use sqlx::MySqlPool;
 
+/// Estabelece conexão com o banco de dados MySQL.
+///
+/// Lê a `DATABASE_URL` do arquivo `.env` e retorna um pool de conexões
+/// gerenciado pelo SQLx para uso assíncrono.
+///
+/// # Erros
+/// Retorna erro se a variável `DATABASE_URL` não estiver definida
+/// ou se a conexão com o banco falhar.
 pub async fn connect_db() -> Result<MySqlPool, Box<dyn std::error::Error>> {
-    dotenv().ok();  // inicia o dotenv para ler o arquivo de configuração
+    dotenv().ok();
 
-    // Lê a URL do banco de dados da variável de ambiente
     let database_url = env::var("DATABASE_URL")?;
 
-    // Conecta ao MySQL de forma assíncrona e retorna a 'pool' de conexões
     let pool = MySqlPool::connect(&database_url).await?;
     Ok(pool)
 }

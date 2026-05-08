@@ -2,9 +2,15 @@ use sqlx::MySqlPool;
 use sqlx::Row;
 use crate::models::user::{User, UserType};
 
+/// Repositório de acesso a dados para usuários.
+///
+/// Encapsula operações SQL na tabela `users`: CRUD, busca por ID e promoção de cargo.
 pub struct UserRepository;
 
 impl UserRepository {
+    /// Insere um novo usuário no banco de dados.
+    ///
+    /// Retorna o ID gerado pelo auto_increment.
     pub async fn create(pool: &MySqlPool, user: &User) -> Result<i32, sqlx::Error> {
         let result = sqlx::query(
             r#"
@@ -27,6 +33,7 @@ impl UserRepository {
         Ok(id)
     }
 
+    /// Lista todos os usuários cadastrados.
     pub async fn list(pool: &MySqlPool) -> Result<Vec<User>, sqlx::Error> {
         let user_rows = sqlx::query(
             r#"
@@ -66,6 +73,9 @@ impl UserRepository {
     }
 
 
+    /// Atualiza os dados de um usuário existente.
+    ///
+    /// Retorna erro `RowNotFound` se o usuário não possuir ID definido.
     pub async fn update(pool: &MySqlPool, user: &User) -> Result<(), sqlx::Error> {
     if let Some(user_id) = user.id {
         sqlx::query(
@@ -92,6 +102,7 @@ impl UserRepository {
     }
 }
 
+    /// Remove um usuário pelo ID.
     pub async fn delete(pool: &MySqlPool, id: i32) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM users WHERE id = ?")
             .bind(id)
@@ -100,7 +111,7 @@ impl UserRepository {
         Ok(())
     }
 
-    // Buscar por ID
+    /// Busca um usuário pelo ID. Retorna `None` se não encontrado.
     pub async fn get_by_id(pool: &MySqlPool, id: i32) -> Result<Option<User>, sqlx::Error> {
         let row = sqlx::query(
             r#"
@@ -137,6 +148,9 @@ impl UserRepository {
         }
     }
 
+    /// Altera o cargo (role_id) de um usuário.
+    ///
+    /// Utilizado na funcionalidade de promoção (requer permissão de Admin).
     pub async fn promote_user(pool: &MySqlPool, user_id: i32, new_role_id: i16) -> Result<(), sqlx::Error> {
         sqlx::query("UPDATE users SET role_id = ? WHERE id = ?")
             .bind(new_role_id)

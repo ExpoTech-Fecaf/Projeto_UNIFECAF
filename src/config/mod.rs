@@ -1,1 +1,3 @@
-pub mod database;   //Torna o módulo 'database' público para que o main.rs consiga enxergá-lo
+//! Módulo de configuração da aplicação.
+
+pub mod database;

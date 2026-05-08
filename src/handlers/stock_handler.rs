@@ -6,16 +6,23 @@ use crate::repository::product_repository::ProductRepository;
 use crate::repository::movement_repository::MovementRepository;
 use crate::models::movement::Movement;
 
+/// Payload de requisição para operações de estoque (entrada/saída).
 #[derive(serde::Deserialize)]
 pub struct StockRequest {
+    /// Nome do produto
     pub product_name: String,
+    /// Quantidade a movimentar
     pub quantity: i32,
+    /// ID do usuário que realiza a operação
     pub user_id: i32,
+    /// Observações opcionais
     #[serde(default)]
     pub notes: Option<String>,
 }
 
-// Entrada de estoque
+/// Handler para entrada de estoque.
+///
+/// Adiciona a quantidade ao lote mais recente do produto e registra a movimentação.
 pub async fn stock_entry(
     State(pool): State<MySqlPool>,
     Json(req): Json<StockRequest>,
@@ -33,7 +40,6 @@ pub async fn stock_entry(
         let new_stock = batch.current_stock + req.quantity;
         match ProductRepository::update_quantity(&pool, batch.id, new_stock).await {
             Ok(_) => {
-                // Registrar movimentação
                 let movement = Movement {
                     id: None,
                     product_id: batch.id,
@@ -62,12 +68,14 @@ pub async fn stock_entry(
     }
 }
 
-// Saída de estoque (FIFO)
+/// Handler para saída de estoque com lógica FIFO.
+///
+/// Consome lotes do mais antigo ao mais novo, registra a movimentação,
+/// e retorna avisos de estoque baixo e consumo elevado (sem bloquear).
 pub async fn stock_exit(
     State(pool): State<MySqlPool>,
     Json(req): Json<StockRequest>,
 ) -> Json<serde_json::Value> {
-    // Buscar o product_id antes da retirada
     let batches = match ProductRepository::find_batches_by_name(&pool, &req.product_name).await {
         Ok(b) => b,
         Err(_) => return Json(json!({"success": false, "message": "Produto não encontrado"})),
@@ -80,7 +88,6 @@ pub async fn stock_exit(
 
     match stock_service::withdraw_stock(&pool, &req.product_name, req.quantity).await {
         Ok(_) => {
-            // Registrar movimentação
             let movement = Movement {
                 id: None,
                 product_id,
@@ -98,19 +105,43 @@ pub async fn stock_exit(
                 .map(|b| b.iter().map(|p| p.current_stock).sum())
                 .unwrap_or(0);
 
-            Json(json!({
+            // Verificar aviso de estoque baixo (não bloqueia)
+            let aviso = stock_service::verificar_estoque_baixo(&pool, &req.product_name).await;
+
+            // Verificar alerta de consumo elevado para o dia (não bloqueia)
+            let alerta_consumo = stock_service::verificar_consumo_elevado(&pool, &req.product_name, req.quantity).await;
+
+            let mut response = json!({
                 "success": true,
                 "message": "Saída de estoque registrada",
                 "product_name": req.product_name,
                 "quantity_removed": req.quantity,
                 "remaining_stock": remaining
-            }))
+            });
+
+            if let Some(alerta) = aviso {
+                response["aviso_estoque_baixo"] = json!({
+                    "alerta": true,
+                    "mensagem": alerta.mensagem,
+                    "current_stock": alerta.current_stock,
+                    "min_stock": alerta.min_stock
+                });
+            }
+
+            if let Some(msg) = alerta_consumo {
+                response["aviso_consumo_elevado"] = json!({
+                    "alerta": true,
+                    "mensagem": msg
+                });
+            }
+
+            Json(response)
         }
         Err(e) => Json(json!({"success": false, "message": e})),
     }
 }
 
-// Consultar estoque de um produto por nome
+/// Handler para consulta de estoque de um produto por nome.
 pub async fn get_stock(
     State(pool): State<MySqlPool>,
     axum::extract::Path(name): axum::extract::Path<String>,
@@ -136,7 +167,7 @@ pub async fn get_stock(
     }
 }
 
-// Listar todo o histórico de movimentações
+/// Handler para listar todo o histórico de movimentações.
 pub async fn list_movements(
     State(pool): State<MySqlPool>,
 ) -> Json<serde_json::Value> {
@@ -149,7 +180,7 @@ pub async fn list_movements(
     }
 }
 
-// Listar movimentações de um produto específico
+/// Handler para listar movimentações de um produto específico.
 pub async fn list_movements_by_product(
     State(pool): State<MySqlPool>,
     axum::extract::Path(product_id): axum::extract::Path<i32>,
@@ -167,7 +198,7 @@ pub async fn list_movements_by_product(
 // RELATÓRIOS
 // ============================
 
-// Relatório completo
+/// Handler para relatório completo de estoque.
 pub async fn stock_report(
     State(pool): State<MySqlPool>,
 ) -> Json<serde_json::Value> {
@@ -183,7 +214,7 @@ pub async fn stock_report(
     }
 }
 
-// Estoque crítico
+/// Handler para relatório de produtos com estoque crítico (≤ 5 unidades).
 pub async fn critical_stock_report(
     State(pool): State<MySqlPool>,
 ) -> Json<serde_json::Value> {
@@ -191,6 +222,46 @@ pub async fn critical_stock_report(
         Ok(report) => Json(json!({
             "success": true,
             "data": report
+        })),
+        Err(e) => Json(json!({
+            "success": false,
+            "message": e
+        })),
+    }
+}
+
+/// Handler para alertas de consumo ajustados pelo dia da semana.
+pub async fn consumption_alert(
+    State(pool): State<MySqlPool>,
+) -> Json<serde_json::Value> {
+    match stock_service::alertas_consumo_dia(&pool).await {
+        Ok(alertas) => {
+            let em_alerta: Vec<_> = alertas.iter().filter(|a| a.alerta).collect();
+            Json(json!({
+                "success": true,
+                "dia_semana": alertas.first().map(|a| a.dia_semana.clone()).unwrap_or_default(),
+                "nivel_movimento": alertas.first().map(|a| a.nivel_movimento.clone()).unwrap_or_default(),
+                "total_produtos": alertas.len(),
+                "produtos_em_alerta": em_alerta.len(),
+                "data": alertas
+            }))
+        }
+        Err(e) => Json(json!({
+            "success": false,
+            "message": e
+        })),
+    }
+}
+
+/// Handler para listar todos os produtos com estoque abaixo do mínimo definido.
+pub async fn low_stock_warnings(
+    State(pool): State<MySqlPool>,
+) -> Json<serde_json::Value> {
+    match stock_service::listar_avisos_estoque_baixo(&pool).await {
+        Ok(avisos) => Json(json!({
+            "success": true,
+            "total_avisos": avisos.len(),
+            "data": avisos
         })),
         Err(e) => Json(json!({
             "success": false,

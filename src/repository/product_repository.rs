@@ -2,9 +2,16 @@ use sqlx::MySqlPool;
 use sqlx::Row;
 use crate::models::product::Product;
 
+/// Repositório de acesso a dados para produtos/lotes.
+///
+/// Encapsula todas as operações SQL relacionadas à tabela `products`,
+/// incluindo CRUD básico, busca por lotes (FIFO) e relatórios.
 pub struct ProductRepository;
 
 impl ProductRepository {
+    /// Insere um novo produto/lote no banco de dados.
+    ///
+    /// Retorna o ID gerado pelo auto_increment.
     pub async fn create(pool: &MySqlPool, product: &Product) -> Result<i32, sqlx::Error> {
         let result = sqlx::query(
             r#"
@@ -27,6 +34,7 @@ impl ProductRepository {
         Ok(result.last_insert_id() as i32)
     }
 
+    /// Lista todos os produtos cadastrados no banco de dados.
     pub async fn list(pool: &MySqlPool) -> Result<Vec<Product>, sqlx::Error> {
         let products = sqlx::query(
             r#"
@@ -55,6 +63,7 @@ impl ProductRepository {
         Ok(products)
     }
 
+    /// Atualiza todos os campos de um produto existente.
     pub async fn update(pool: &MySqlPool, product: &Product) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"
@@ -79,6 +88,7 @@ impl ProductRepository {
         Ok(())
     }
 
+    /// Remove um produto pelo ID.
     pub async fn delete(pool: &MySqlPool, id: i32) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM products WHERE id = ?")
             .bind(id)
@@ -87,7 +97,7 @@ impl ProductRepository {
         Ok(())
     }
 
-    /// Busca todos os lotes (produtos) de um tipo específico, ordenados por entry_date (ASC) para FIFO
+    /// Busca todos os lotes (produtos) de um tipo específico, ordenados por entry_date (ASC) para FIFO.
     pub async fn find_batches_by_name(pool: &MySqlPool, product_name: &str) -> Result<Vec<Product>, sqlx::Error> {
         let batches = sqlx::query(
             r#"
@@ -120,7 +130,7 @@ impl ProductRepository {
         Ok(batches)
     }
 
-    /// Atualiza apenas a quantidade de estoque de um lote específico
+    /// Atualiza apenas a quantidade de estoque de um lote específico.
     pub async fn update_quantity(pool: &MySqlPool, product_id: i32, new_quantity: i32) -> Result<(), sqlx::Error> {
         sqlx::query("UPDATE products SET current_stock = ? WHERE id = ?")
             .bind(new_quantity)
@@ -128,6 +138,18 @@ impl ProductRepository {
             .execute(pool)
             .await?;
         Ok(())
+    }
+
+    /// Busca o valor de `min_stock` de um produto pelo ID.
+    ///
+    /// Utilizado pelo sistema de alerta de consumo por dia da semana.
+    pub async fn get_min_stock(pool: &MySqlPool, product_id: i32) -> Result<i32, sqlx::Error> {
+        let row = sqlx::query("SELECT min_stock FROM products WHERE id = ?")
+            .bind(product_id)
+            .fetch_one(pool)
+            .await?;
+
+        Ok(row.get("min_stock"))
     }
 }
 
@@ -156,7 +178,7 @@ pub struct StockReport {
 
 impl ProductRepository {
 
-    // Relatório completo de estoque
+    /// Relatório completo de estoque agrupado por produto.
     pub async fn stock_report(
         pool: &MySqlPool,
     ) -> Result<Vec<StockReport>, sqlx::Error> {
@@ -193,7 +215,7 @@ impl ProductRepository {
         Ok(reports)
     }
 
-    // Produtos com estoque crítico
+    /// Produtos com estoque crítico (total ≤ 5 unidades).
     pub async fn critical_stock(
         pool: &MySqlPool,
     ) -> Result<Vec<StockReport>, sqlx::Error> {
@@ -208,5 +230,3 @@ impl ProductRepository {
         Ok(critical)
     }
 }
-
-

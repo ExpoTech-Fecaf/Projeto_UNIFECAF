@@ -2,18 +2,24 @@
 use serde::{Serialize, Deserialize};
 use chrono::NaiveDate;
 
-// Enum que representa os tipos de usuários do sistema.
-// Cada variante corresponde a um nivel diferente de permissão.
-
+/// Enum que representa os tipos de usuários do sistema.
+///
+/// Cada variante corresponde a um nível diferente de permissão,
+/// utilizado pelo sistema de controle de acesso.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, sqlx::Type)]
 pub enum UserType {
-    Admin, // Usuário administrador (acesso total)
-    Gerente, // Usuário gerente (acesso intermediário)
-    Funcionario // Usuário funcionário (acesso básico)
+    /// Usuário administrador — acesso total (nível 3)
+    Admin,
+    /// Usuário gerente — acesso intermediário (nível 2)
+    Gerente,
+    /// Usuário funcionário — acesso básico (nível 1)
+    Funcionario,
 }
 
 impl UserType {
-    // Converte uma string para o tipo UserType correspondente.
+    /// Retorna o nível numérico de permissão do tipo de usuário.
+    ///
+    /// Utilizado para comparação hierárquica de permissões.
     pub fn nivel(&self) -> i16 {
         match self {
             UserType::Admin => 3,
@@ -23,24 +29,34 @@ impl UserType {
     }
 }
 
-// Struct que representa os usuários do sistema.
-// Armazena informações essenciais para a autenticação e controle de permissão
+/// Struct que representa um usuário do sistema.
+///
+/// Armazena informações para autenticação, identificação pessoal
+/// e controle de permissão baseado em cargo.
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct User {
+    /// ID do usuário (None para usuários ainda não persistidos)
     pub id: Option<i32>,
+    /// Nome de usuário para login (único)
     pub username: String,
+    /// Hash bcrypt da senha
     pub password_hash: String,
+    /// Tipo/nível de permissão
     pub user_type: UserType,
+    /// Primeiro nome
     pub first_name: String,
+    /// Sobrenome
     pub last_name: String,
+    /// Data de nascimento
     pub birth_date: NaiveDate,
+    /// CPF (11 dígitos, validado)
     pub cpf: String,
+    /// FK para a tabela de cargos
     pub role_id: i16,
 }
 
 impl User {
-    // Cria o novo usuário com os dados fornecidos
-    // O id é definido como 'None' pois novos usuários ainda não tem um id definido no banco de dados.
+    /// Cria um novo usuário com `id = None` (ainda não persistido no banco).
     pub fn new(
         username: String,
         password_hash: String,

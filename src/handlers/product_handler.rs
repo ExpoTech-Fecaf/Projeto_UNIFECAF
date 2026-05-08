@@ -6,6 +6,7 @@ use crate::models::product::Product;
 use crate::services::product_service::ProductService;
 use crate::validators::product_validator::ProductValidator;
 
+/// Payload de requisição para criação de produto.
 #[derive(serde::Deserialize)]
 pub struct CreateProductRequest {
     pub name: String,
@@ -19,7 +20,9 @@ pub struct CreateProductRequest {
     pub expiration_date: String,
 }
 
-// Criar produto
+/// Handler para criação de produto.
+///
+/// Valida nome único, status e datas antes de persistir.
 pub async fn create_product(
     State(pool): State<MySqlPool>,
     Json(req): Json<CreateProductRequest>,
@@ -62,7 +65,7 @@ pub async fn create_product(
     }
 }
 
-// Listar produtos
+/// Handler para listagem de todos os produtos.
 pub async fn list_products(State(pool): State<MySqlPool>) -> Json<Vec<Product>> {
     match ProductService::list_products(&pool).await {
         Ok(products) => Json(products),
@@ -70,7 +73,7 @@ pub async fn list_products(State(pool): State<MySqlPool>) -> Json<Vec<Product>> 
     }
 }
 
-// Buscar produto por ID
+/// Handler para busca de produto por ID.
 pub async fn get_product(
     State(pool): State<MySqlPool>,
     Path(id): Path<i32>,
@@ -87,7 +90,9 @@ pub async fn get_product(
     }
 }
 
-// Atualizar produto
+/// Handler para atualização de produto.
+///
+/// Valida nome único (excluindo o próprio) e status antes de atualizar.
 pub async fn update_product(
     State(pool): State<MySqlPool>,
     Path(id): Path<i32>,
@@ -119,7 +124,7 @@ pub async fn update_product(
     }
 }
 
-// Deletar produto
+/// Handler para remoção de produto por ID.
 pub async fn delete_product(
     State(pool): State<MySqlPool>,
     Path(id): Path<i32>,

@@ -10,14 +10,14 @@ use crate::repository::user_repository::UserRepository;
 use axum::Extension;
 use axum::http::StatusCode;
 
-// Estrutura para representar uma requisição de login
+/// Payload de requisição para login.
 #[derive(serde::Deserialize)]
 pub struct LoginRequest {
     pub username: String,
     pub password: String,
 }
 
-// Estrutura para representar a resposta do login
+/// Resposta do endpoint de login.
 #[derive(serde::Serialize)]
 pub struct LoginResponse {
     pub success: bool,
@@ -25,7 +25,7 @@ pub struct LoginResponse {
     pub user_type: Option<UserType>,
 }
 
-// Estrutura para representar uma requisição de registro
+/// Payload de requisição para registro de usuário.
 #[derive(serde::Deserialize)]
 pub struct RegisterRequest {
     pub username: String,
@@ -37,7 +37,7 @@ pub struct RegisterRequest {
     pub role_id: i16,
 }
 
-// Estrutura para representar a resposta do registro
+/// Resposta dos endpoints de registro e atualização de usuário.
 #[derive(serde::Serialize)]
 pub struct RegisterResponse {
     pub success: bool,
@@ -45,7 +45,9 @@ pub struct RegisterResponse {
     pub user_id: Option<i32>,
 }
 
-// Função para lidar com a lógica de login
+/// Handler de login.
+///
+/// Busca usuários no banco, autentica por username/senha e retorna o tipo de usuário.
 pub async fn login(
     State(pool): State<MySqlPool>,
     Json(payload): Json<LoginRequest>,
@@ -95,7 +97,9 @@ pub async fn login(
     }
 }
 
-// Função para lidar com a lógica de registro
+/// Handler de registro de novo usuário.
+///
+/// Valida username único, role_id, CPF e data de nascimento antes de criar.
 pub async fn register(
     State(pool): State<MySqlPool>,
     Json(payload): Json<RegisterRequest>,
@@ -179,7 +183,7 @@ pub async fn register(
     }
 }
 
-// Função para listar todos os usuários
+/// Handler para listagem de todos os usuários.
 pub async fn list_users(
     State(pool): State<MySqlPool>,
 ) -> Json<Vec<User>> {
@@ -189,6 +193,9 @@ pub async fn list_users(
     }
 }
 
+/// Handler para atualização de usuário.
+///
+/// Valida role_id, CPF, username único e CPF único antes de atualizar.
 pub async fn update_user(
     State(pool): State<MySqlPool>,
     Path(id): Path<i32>,
@@ -270,7 +277,7 @@ pub async fn update_user(
     }
 }
 
-// Buscar usuário por ID
+/// Handler para busca de usuário por ID.
 pub async fn get_user(
     State(pool): State<MySqlPool>,
     Path(id): Path<i32>,
@@ -282,7 +289,7 @@ pub async fn get_user(
     }
 }
 
-// Deletar usuário
+/// Handler para remoção de usuário por ID.
 pub async fn delete_user(
     State(pool): State<MySqlPool>,
     Path(id): Path<i32>,
@@ -294,13 +301,16 @@ pub async fn delete_user(
 }
 
 
-// Função para promover um usuário a um novo tipo (Admin, Gerente, Funcionario)
+/// Payload para promoção de usuário.
 #[derive(serde::Deserialize)]
 pub struct PromoteRequest {
     pub users_id: i32,
     pub new_role_id: i16,
 }
 
+/// Handler para promoção de usuário.
+///
+/// Requer permissão de Admin. Altera o cargo do usuário alvo.
 pub async fn promote_user(
     State(pool): State<MySqlPool>,
     Extension(user): Extension<User>,

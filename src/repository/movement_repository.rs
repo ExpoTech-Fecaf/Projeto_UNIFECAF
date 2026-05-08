@@ -2,9 +2,13 @@ use sqlx::MySqlPool;
 use sqlx::Row;
 use crate::models::movement::Movement;
 
+/// Repositório de acesso a dados para movimentações de estoque.
+///
+/// Registra e consulta o histórico de entradas e saídas de produtos.
 pub struct MovementRepository;
 
 impl MovementRepository {
+    /// Registra uma nova movimentação (entrada ou saída) no histórico.
     pub async fn create(pool: &MySqlPool, movement: &Movement) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"
@@ -23,6 +27,7 @@ impl MovementRepository {
         Ok(())
     }
 
+    /// Lista todas as movimentações ordenadas por data (mais recentes primeiro).
     pub async fn list_all(pool: &MySqlPool) -> Result<Vec<Movement>, sqlx::Error> {
         let rows = sqlx::query(
             r#"
@@ -50,6 +55,7 @@ impl MovementRepository {
         Ok(movements)
     }
 
+    /// Lista movimentações de um produto específico, ordenadas por data decrescente.
     pub async fn list_by_product(pool: &MySqlPool, product_id: i32) -> Result<Vec<Movement>, sqlx::Error> {
         let rows = sqlx::query(
             r#"
