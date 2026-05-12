@@ -91,7 +91,7 @@ pub async fn stock_exit(
             let movement = Movement {
                 id: None,
                 product_id,
-                batch_id: None,
+                batch_id: Some(product_id),
                 user_id: req.user_id,
                 movement_type: "saida".to_string(),
                 quantity: req.quantity,
