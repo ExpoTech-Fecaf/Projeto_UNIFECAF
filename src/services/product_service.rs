@@ -13,6 +13,11 @@ impl ProductService {
         ProductRepository::create(pool, &product).await
     }
 
+    /// Busca um produto pelo ID.
+    pub async fn get_product_by_id(pool: &MySqlPool, id: i32) -> Result<Option<Product>, sqlx::Error> {
+        ProductRepository::find_by_id(pool, id).await
+    }
+
     /// Lista todos os produtos cadastrados.
     pub async fn list_products(pool: &MySqlPool) -> Result<Vec<Product>, sqlx::Error> {
         ProductRepository::list(pool).await

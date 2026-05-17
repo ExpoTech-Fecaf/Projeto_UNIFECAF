@@ -34,6 +34,29 @@ impl ProductRepository {
         Ok(result.last_insert_id() as i32)
     }
 
+    /// Busca um produto pelo ID.
+    pub async fn find_by_id(pool: &MySqlPool, id: i32) -> Result<Option<Product>, sqlx::Error> {
+        let row = sqlx::query(
+            "SELECT id, name, cost_price, sale_price, current_stock, weight_grams, status, production_date, expiration_date, entry_date FROM products WHERE id = ?"
+        )
+        .bind(id)
+        .fetch_optional(pool)
+        .await?;
+
+        Ok(row.map(|row| Product {
+            id: row.get("id"),
+            name: row.get("name"),
+            cost_price: row.get("cost_price"),
+            sale_price: row.get("sale_price"),
+            current_stock: row.get("current_stock"),
+            weight_grams: row.get("weight_grams"),
+            status: row.get("status"),
+            production_date: row.get("production_date"),
+            expiration_date: row.get("expiration_date"),
+            entry_date: row.get("entry_date"),
+        }))
+    }
+
     /// Lista todos os produtos cadastrados no banco de dados.
     pub async fn list(pool: &MySqlPool) -> Result<Vec<Product>, sqlx::Error> {
         let products = sqlx::query(

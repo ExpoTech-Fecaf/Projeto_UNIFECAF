@@ -11,16 +11,28 @@ pub struct ProductValidator;
 impl ProductValidator {
     /// Valida se o nome do produto é único no banco (case-insensitive).
     pub async fn validate_name_unique(pool: &MySqlPool, name: &str) -> Result<(), ValidationError> {
+        Self::validate_name_unique_excluding(pool, name, None).await
+    }
+
+    /// Valida se o nome do produto é único, excluindo um ID específico (para updates).
+    pub async fn validate_name_unique_excluding(pool: &MySqlPool, name: &str, exclude_id: Option<i32>) -> Result<(), ValidationError> {
         let name = name.trim();
 
         if name.is_empty() {
             return Err(ValidationError::new("name", "O nome do produto não pode ficar em branco"));
         }
 
-        let result = sqlx::query("SELECT id FROM products WHERE LOWER(name) = LOWER(?)")
-            .bind(name)
-            .fetch_optional(pool)
-            .await;
+        let result = match exclude_id {
+            Some(id) => sqlx::query("SELECT id FROM products WHERE LOWER(name) = LOWER(?) AND id != ?")
+                .bind(name)
+                .bind(id)
+                .fetch_optional(pool)
+                .await,
+            None => sqlx::query("SELECT id FROM products WHERE LOWER(name) = LOWER(?)")
+                .bind(name)
+                .fetch_optional(pool)
+                .await,
+        };
 
         match result {
             Ok(Some(_)) => Err(ValidationError::new(
