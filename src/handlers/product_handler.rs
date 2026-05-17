@@ -6,7 +6,6 @@ use crate::models::product::Product;
 use crate::services::product_service::ProductService;
 use crate::validators::product_validator::ProductValidator;
 
-/// Payload de requisição para criação de produto.
 #[derive(serde::Deserialize)]
 pub struct CreateProductRequest {
     pub name: String,
@@ -20,9 +19,6 @@ pub struct CreateProductRequest {
     pub expiration_date: String,
 }
 
-/// Handler para criação de produto.
-///
-/// Valida nome único, status e datas antes de persistir.
 pub async fn create_product(
     State(pool): State<MySqlPool>,
     Json(req): Json<CreateProductRequest>,
@@ -65,7 +61,6 @@ pub async fn create_product(
     }
 }
 
-/// Handler para listagem de todos os produtos.
 pub async fn list_products(State(pool): State<MySqlPool>) -> Json<Vec<Product>> {
     match ProductService::list_products(&pool).await {
         Ok(products) => Json(products),
@@ -73,26 +68,17 @@ pub async fn list_products(State(pool): State<MySqlPool>) -> Json<Vec<Product>> 
     }
 }
 
-/// Handler para busca de produto por ID.
 pub async fn get_product(
     State(pool): State<MySqlPool>,
     Path(id): Path<i32>,
 ) -> Result<Json<Product>, (StatusCode, Json<serde_json::Value>)> {
-    match ProductService::list_products(&pool).await {
-        Ok(products) => {
-            if let Some(product) = products.into_iter().find(|p| p.id == id) {
-                Ok(Json(product))
-            } else {
-                Err((StatusCode::NOT_FOUND, Json(json!({"message": "Produto não encontrado"}))))
-            }
-        }
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"message": e.to_string()}))))
+    match ProductService::get_product_by_id(&pool, id).await {
+        Ok(Some(product)) => Ok(Json(product)),
+        Ok(None) => Err((StatusCode::NOT_FOUND, Json(json!({"message": "Produto não encontrado"})))),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"message": e.to_string()})))),
     }
 }
 
-/// Handler para atualização de produto.
-///
-/// Valida nome único (excluindo o próprio) e status antes de atualizar.
 pub async fn update_product(
     State(pool): State<MySqlPool>,
     Path(id): Path<i32>,
@@ -100,31 +86,20 @@ pub async fn update_product(
 ) -> Json<serde_json::Value> {
     payload.id = id;
 
-    let existing_products = ProductService::list_products(&pool).await.unwrap_or_default();
-    if existing_products.iter().any(|p| p.name.to_lowercase() == payload.name.to_lowercase() && p.id != id) {
-        return Json(json!({
-            "success": false, 
-            "message": "Já existe outro produto com este nome"
-        }));
+    if let Err(e) = ProductValidator::validate_name_unique_excluding(&pool, &payload.name, Some(id)).await {
+        return Json(json!({"success": false, "message": e.message, "field": e.field}));
     }
 
     if let Err(e) = ProductValidator::validate_status(payload.status) {
-        return Json(json!({"success": false, "message": e.message}));
+        return Json(json!({"success": false, "message": e.message, "field": e.field}));
     }
 
     match ProductService::update_product(&pool, payload).await {
-        Ok(_) => Json(json!({
-            "success": true,
-            "message": "Produto atualizado com sucesso"
-        })),
-        Err(e) => Json(json!({
-            "success": false,
-            "message": format!("Erro ao atualizar no banco: {}", e)
-        })),
+        Ok(_) => Json(json!({"success": true, "message": "Produto atualizado com sucesso"})),
+        Err(e) => Json(json!({"success": false, "message": format!("Erro ao atualizar no banco: {}", e)})),
     }
 }
 
-/// Handler para remoção de produto por ID.
 pub async fn delete_product(
     State(pool): State<MySqlPool>,
     Path(id): Path<i32>,
