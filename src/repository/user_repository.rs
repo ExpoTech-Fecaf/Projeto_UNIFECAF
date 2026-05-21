@@ -4,7 +4,7 @@ use crate::models::user::{User, UserType};
 
 /// Repositório de acesso a dados para usuários.
 ///
-/// Encapsula operações SQL na tabela `users`: CRUD, busca por ID e promoção de cargo.
+/// Encapsula operações SQL na tabela `users`: CRUD, busca por ID/username e promoção de cargo.
 pub struct UserRepository;
 
 impl UserRepository {
@@ -46,8 +46,6 @@ impl UserRepository {
 
         let mut users = Vec::new();
         for row in user_rows {
-            use crate::models::user::UserType;
-
             let role_id: i16 = row.get("role_id");
             let user_id: i32 = row.get("id");
             let user_type = match role_id {
@@ -72,35 +70,34 @@ impl UserRepository {
         Ok(users)
     }
 
-
     /// Atualiza os dados de um usuário existente.
     ///
     /// Retorna erro `RowNotFound` se o usuário não possuir ID definido.
     pub async fn update(pool: &MySqlPool, user: &User) -> Result<(), sqlx::Error> {
-    if let Some(user_id) = user.id {
-        sqlx::query(
-            r#"
-            UPDATE users
-            SET first_name = ?, last_name = ?, birth_date = ?,
-                username = ?, password_hash = ?, role_id = ?, cpf = ?
-            WHERE id = ?
-            "#,
-        )
-        .bind(&user.first_name)
-        .bind(&user.last_name)
-        .bind(user.birth_date)
-        .bind(&user.username)
-        .bind(&user.password_hash)
-        .bind(user.role_id)
-        .bind(&user.cpf)
-        .bind(user_id)
-        .execute(pool)
-        .await?;
-        Ok(())
-    } else {
-        Err(sqlx::Error::RowNotFound)
+        if let Some(user_id) = user.id {
+            sqlx::query(
+                r#"
+                UPDATE users
+                SET first_name = ?, last_name = ?, birth_date = ?,
+                    username = ?, password_hash = ?, role_id = ?, cpf = ?
+                WHERE id = ?
+                "#,
+            )
+            .bind(&user.first_name)
+            .bind(&user.last_name)
+            .bind(user.birth_date)
+            .bind(&user.username)
+            .bind(&user.password_hash)
+            .bind(user.role_id)
+            .bind(&user.cpf)
+            .bind(user_id)
+            .execute(pool)
+            .await?;
+            Ok(())
+        } else {
+            Err(sqlx::Error::RowNotFound)
+        }
     }
-}
 
     /// Remove um usuário pelo ID.
     pub async fn delete(pool: &MySqlPool, id: i32) -> Result<(), sqlx::Error> {
@@ -120,7 +117,44 @@ impl UserRepository {
             "#
         )
         .bind(id)
-        .fetch_optional(pool) // Retorna Option para caso o ID não exista
+        .fetch_optional(pool)
+        .await?;
+
+        if let Some(row) = row {
+            let role_id: i16 = row.get("role_id");
+            let user_type = match role_id {
+                1 => UserType::Admin,
+                2 => UserType::Funcionario,
+                3 => UserType::Gerente,
+                _ => UserType::Funcionario,
+            };
+
+            Ok(Some(User {
+                id: Some(row.get("id")),
+                first_name: row.get("first_name"),
+                last_name: row.get("last_name"),
+                birth_date: row.get("birth_date"),
+                cpf: row.get("cpf"),
+                username: row.get("username"),
+                password_hash: row.get("password_hash"),
+                user_type,
+                role_id,
+            }))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// Busca um usuário pelo username. Retorna `None` se não encontrado.
+    pub async fn find_by_username(pool: &MySqlPool, username: &str) -> Result<Option<User>, sqlx::Error> {
+        let row = sqlx::query(
+            r#"
+            SELECT id, username, first_name, last_name, cpf, birth_date, password_hash, role_id
+            FROM users WHERE username = ?
+            "#
+        )
+        .bind(username)
+        .fetch_optional(pool)
         .await?;
 
         if let Some(row) = row {
@@ -159,5 +193,4 @@ impl UserRepository {
             .await?;
         Ok(())
     }
-
 }

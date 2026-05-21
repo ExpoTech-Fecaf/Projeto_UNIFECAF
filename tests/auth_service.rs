@@ -14,9 +14,9 @@ fn test_hash_password() {
 #[test]
 fn test_verify_password() {
     let password = "minha_senha"; // Gerando a senha
-    let stored = password; // Usando senha plain
+    let stored = auth_service::hash_password(password).unwrap();
 
-    assert!(auth_service::verify_password(password, stored).unwrap()); // Verifica se corresponde
+    assert!(auth_service::verify_password(password, &stored).unwrap()); // Verifica se corresponde
 }
 
 // Teste para a função de autenticar usuário
@@ -25,11 +25,12 @@ fn test_authenticate_user(){
     let password = "minha_senha"; // Gerando a senha
 
     // Criando um novo user
+    let hashed_password = auth_service::hash_password(password).unwrap();
     let user = vec![
         User{
             id: None,
             username: "icaro".to_string(),
-            password_hash: password.to_string(), // Usando senha plain
+            password_hash: hashed_password,
             user_type: UserType::Admin,
             first_name: "Icaro".to_string(),
             last_name: "Rodrigues".to_string(),
