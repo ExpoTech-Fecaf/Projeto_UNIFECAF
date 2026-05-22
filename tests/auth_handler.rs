@@ -5,13 +5,13 @@ use gerenciamento_de_estoque::services::auth_service;
 #[test]
 fn test_authenticate_user() {
     let password = "admin321";
-    let _hashed_password = auth_service::hash_password(password);
+    let hashed_password = auth_service::hash_password(password).unwrap();
 
     let users = vec![
         User{
             id: None,
             username: "admin".to_string(),
-            password_hash: "admin321".to_string(), // Usando senha plain para teste
+            password_hash: hashed_password,
             user_type: UserType::Admin,
             first_name: "admin".to_string(),
             last_name: "321".to_string(),
