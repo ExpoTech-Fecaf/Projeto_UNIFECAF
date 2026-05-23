@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FoodStock Manager — Login</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="center">
+  <div class="card">
+    <img src="assets/logo.jpeg" alt="FoodStock Manager" class="logo">
+    <p class="brand-subtitle">Acesse sua conta para gerenciar o estoque.</p>
+
+    <form id="login-form">
+      <div class="form-group">
+        <label for="username">Usuário</label>
+        <input type="text" id="username" placeholder="Digite seu username" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Senha</label>
+        <input type="password" id="password" placeholder="Digite sua senha" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Entrar</button>
+    </form>
+
+    <div id="alert" class="alert alert-error"></div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    document.getElementById("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const alert = document.getElementById("alert");
+      alert.className = "alert";
+
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+
+      try {
+        const { status, data } = await apiRequest("/login", {
+          method: "POST",
+          body: JSON.stringify({ username, password }),
+        });
+
+        if (status === 200 && data && data.success) {
+          localStorage.setItem("user", JSON.stringify(data));
+          alert.textContent = "Login realizado com sucesso!";
+          alert.className = "alert alert-success show";
+          setTimeout(() => {
+            if (data.user_type === "Admin") window.location.href = "admin/dashboard.html";
+            else if (data.user_type === "Gerente") window.location.href = "gerente/dashboard.html";
+            else window.location.href = "funcionario/dashboard.html";
+          }, 500);
+        } else {
+          alert.textContent = data?.message || "Usuário ou senha incorretos";
+          alert.className = "alert alert-error show";
+        }
+      } catch {
+        alert.textContent = "Erro ao conectar com a API";
+        alert.className = "alert alert-error show";
+      }
+    });
+  </script>
+</body>
+</html>

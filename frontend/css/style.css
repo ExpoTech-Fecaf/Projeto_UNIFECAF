@@ -1,0 +1,143 @@
+:root {
+  --navy: #0D1B2A;
+  --green-dark: #2E7D32;
+  --green-medium: #66BB6A;
+  --orange: #F39C12;
+  --bg-light: #F5F7FA;
+  --gray: #6B7280;
+  --white: #FFFFFF;
+  --radius: 12px;
+  --shadow: 0 4px 24px rgba(13, 27, 42, 0.10);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg-light);
+  color: var(--navy);
+  min-height: 100vh;
+}
+
+body.center { display: flex; align-items: center; justify-content: center; }
+
+/* Card (login/health) */
+.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+}
+
+.logo { width: 220px; height: auto; margin: 0 auto 1.5rem; }
+.brand-subtitle { font-size: 0.85rem; color: var(--gray); margin-bottom: 1.5rem; }
+
+/* Forms */
+.form-group { margin-bottom: 1rem; text-align: left; }
+.form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--navy); margin-bottom: 0.3rem; }
+.form-group input, .form-group select {
+  width: 100%; padding: 0.7rem 1rem; border: 1.5px solid #dde1e7;
+  border-radius: 8px; font-size: 0.95rem; transition: border-color 0.2s;
+}
+.form-group input:focus, .form-group select:focus { outline: none; border-color: var(--green-medium); }
+
+.btn {
+  padding: 0.65rem 1.2rem; border: none; border-radius: 8px;
+  font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background 0.2s;
+}
+.btn-full { width: 100%; margin-top: 0.5rem; }
+.btn-primary { background: var(--green-dark); color: var(--white); }
+.btn-primary:hover { background: var(--green-medium); }
+.btn-danger { background: #b71c1c; color: var(--white); }
+.btn-danger:hover { background: #d32f2f; }
+.btn-secondary { background: #dde1e7; color: var(--navy); }
+.btn-secondary:hover { background: #c5cad2; }
+.btn-orange { background: var(--orange); color: var(--white); }
+.btn-orange:hover { background: #e67e22; }
+.btn-sm { padding: 0.4rem 0.7rem; font-size: 0.8rem; }
+
+/* Alerts */
+.alert { padding: 0.7rem 1rem; border-radius: 8px; font-size: 0.85rem; margin-top: 1rem; display: none; }
+.alert-error { background: #fdecea; color: #b71c1c; border: 1px solid #f5c6cb; }
+.alert-success { background: #e8f5e9; color: var(--green-dark); border: 1px solid #c8e6c9; }
+.alert.show { display: block; }
+
+/* Status badge */
+.status-badge { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem; font-weight: 600; margin-top: 1rem; }
+.status-online { background: #e8f5e9; color: var(--green-dark); }
+.status-offline { background: #fdecea; color: #b71c1c; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; animation: pulse 1.5s infinite; }
+.status-online .status-dot { background: var(--green-medium); }
+.status-offline .status-dot { background: #b71c1c; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* Layout dashboard */
+.layout { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 250px; background: var(--navy); color: var(--white);
+  padding: 1.5rem 1rem; display: flex; flex-direction: column;
+}
+.sidebar .sidebar-logo { width: 160px; margin: 0 auto 1.5rem; }
+.sidebar nav a {
+  display: block; padding: 0.7rem 1rem; color: #ccc; text-decoration: none;
+  border-radius: 8px; font-size: 0.9rem; margin-bottom: 0.3rem; transition: background 0.2s;
+}
+.sidebar nav a:hover, .sidebar nav a.active { background: rgba(255,255,255,0.1); color: var(--white); }
+.sidebar .nav-section { font-size: 0.7rem; text-transform: uppercase; color: #888; margin: 1rem 0 0.4rem 1rem; letter-spacing: 0.5px; }
+.sidebar .logout { margin-top: auto; }
+
+.main { flex: 1; padding: 2rem; overflow-y: auto; }
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+.page-header h1 { font-size: 1.5rem; }
+
+/* Tables */
+.table-wrap { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 0.75rem 1rem; text-align: left; font-size: 0.85rem; }
+th { background: var(--navy); color: var(--white); font-weight: 600; }
+tr:nth-child(even) { background: #f9fafb; }
+tr:hover { background: #eef2f7; }
+.actions { display: flex; gap: 0.4rem; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: none; align-items: center; justify-content: center; z-index: 100;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--white); border-radius: var(--radius); padding: 2rem;
+  width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto;
+}
+.modal h2 { margin-bottom: 1rem; font-size: 1.2rem; }
+.modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem; }
+
+/* Cards grid (reports) */
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+.report-card {
+  background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 1.2rem; border-left: 4px solid var(--green-dark);
+}
+.report-card.critical { border-left-color: #b71c1c; }
+.report-card.warning { border-left-color: var(--orange); }
+.report-card h3 { font-size: 0.95rem; margin-bottom: 0.3rem; }
+.report-card p { font-size: 0.85rem; color: var(--gray); }
+.report-card .stock-value { font-size: 1.3rem; font-weight: 700; color: var(--navy); }
+.report-card .stock-value.low { color: #b71c1c; }
+
+/* Search bar */
+.search-bar {
+  display: flex; gap: 0.5rem; margin-bottom: 1.5rem;
+}
+.search-bar input { flex: 1; padding: 0.7rem 1rem; border: 1.5px solid #dde1e7; border-radius: 8px; font-size: 0.9rem; }
+.search-bar input:focus { outline: none; border-color: var(--green-medium); }
+
+/* Badge */
+.badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+.badge-admin { background: #e3f2fd; color: #1565c0; }
+.badge-gerente { background: #e8f5e9; color: var(--green-dark); }
+.badge-funcionario { background: #fff3e0; color: #e65100; }

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Consultar Estoque</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <div class="page-header"><h1>Consultar Estoque</h1></div>
+
+      <div class="search-bar">
+        <input type="text" id="product-name" placeholder="Nome do produto...">
+        <button class="btn btn-primary" onclick="search()">Buscar</button>
+      </div>
+
+      <div id="result" style="display:none;">
+        <div class="report-card" style="margin-bottom:1rem;">
+          <h3 id="res-name"></h3>
+          <p>Estoque total: <span id="res-total" class="stock-value"></span></p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Lote ID</th><th>Quantidade</th><th>Data de Entrada</th></tr></thead>
+            <tbody id="res-batches"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="alert" class="alert"></div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script>
+    requireAdmin();
+    renderSidebar("stock-search");
+
+    async function search() {
+      const name = document.getElementById("product-name").value.trim();
+      const alert = document.getElementById("alert");
+      const result = document.getElementById("result");
+      alert.className = "alert";
+      result.style.display = "none";
+
+      if (!name) { alert.textContent = "Digite o nome do produto"; alert.className = "alert alert-error show"; return; }
+
+      const { data } = await apiRequest(`/products/stock/${encodeURIComponent(name)}`);
+      if (data && data.total_stock !== undefined) {
+        document.getElementById("res-name").textContent = data.product_name;
+        document.getElementById("res-total").textContent = data.total_stock;
+        document.getElementById("res-batches").innerHTML = (data.batches || []).map(b => `
+          <tr><td>${b.batch_id}</td><td>${b.current_stock}</td><td>${b.entry_date}</td></tr>
+        `).join("");
+        result.style.display = "block";
+      } else {
+        alert.textContent = data?.message || "Produto não encontrado";
+        alert.className = "alert alert-error show";
+      }
+    }
+
+    document.getElementById("product-name").addEventListener("keydown", (e) => { if (e.key === "Enter") search(); });
+  </script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FoodStock Manager — Status</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="center">
+  <div class="card">
+    <img src="assets/logo.jpeg" alt="FoodStock Manager" class="logo">
+    <p class="brand-subtitle">Controle, organize e otimize seu estoque de alimentos.</p>
+
+    <p style="color: var(--gray); font-size: 0.9rem;">Status da API</p>
+    <div id="status" class="status-badge status-offline">
+      <span class="status-dot"></span>
+      <span id="status-text">Verificando...</span>
+    </div>
+
+    <div style="margin-top: 1.5rem;">
+      <a href="login.html" class="btn btn-primary" style="display:inline-block; text-decoration:none;">Ir para Login</a>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    async function checkHealth() {
+      const badge = document.getElementById("status");
+      const text = document.getElementById("status-text");
+      try {
+        const { status } = await apiRequest("/");
+        if (status === 200) { badge.className = "status-badge status-online"; text.textContent = "API Online"; }
+        else throw new Error();
+      } catch { badge.className = "status-badge status-offline"; text.textContent = "API Offline"; }
+    }
+    checkHealth();
+    setInterval(checkHealth, 10000);
+  </script>
+</body>
+</html>

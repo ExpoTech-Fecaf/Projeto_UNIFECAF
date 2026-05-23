@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Usuários</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <div class="page-header">
+        <h1>Usuários</h1>
+        <a href="register.html" class="btn btn-primary">➕ Novo Usuário</a>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Nome</th><th>Username</th><th>CPF</th><th>Cargo</th><th>Ações</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal Editar -->
+  <div class="modal-overlay" id="edit-modal">
+    <div class="modal">
+      <h2>Editar Usuário</h2>
+      <form id="edit-form">
+        <input type="hidden" id="edit-id">
+        <div class="form-group"><label>Username</label><input id="edit-username" required></div>
+        <div class="form-group"><label>Primeiro Nome</label><input id="edit-first" required></div>
+        <div class="form-group"><label>Sobrenome</label><input id="edit-last" required></div>
+        <div class="form-group"><label>CPF</label><input id="edit-cpf" required></div>
+        <div class="form-group"><label>Nova Senha (deixe vazio para manter)</label><input type="password" id="edit-pass"></div>
+        <div class="form-group">
+          <label>Cargo</label>
+          <select id="edit-role"><option value="1">Admin</option><option value="2">Funcionário</option><option value="3">Gerente</option></select>
+        </div>
+        <div id="edit-alert" class="alert"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('edit-modal')">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Promover -->
+  <div class="modal-overlay" id="promote-modal">
+    <div class="modal">
+      <h2>Promover Usuário</h2>
+      <input type="hidden" id="promote-id">
+      <p id="promote-name" style="margin-bottom:1rem;"></p>
+      <div class="form-group">
+        <label>Novo Cargo</label>
+        <select id="promote-role"><option value="1">Admin</option><option value="2">Funcionário</option><option value="3">Gerente</option></select>
+      </div>
+      <div id="promote-alert" class="alert"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('promote-modal')">Cancelar</button>
+        <button class="btn btn-orange" onclick="doPromote()">Promover</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Confirmar Exclusão -->
+  <div class="modal-overlay" id="delete-modal">
+    <div class="modal">
+      <h2>Confirmar Exclusão</h2>
+      <p id="delete-msg"></p>
+      <input type="hidden" id="delete-id">
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('delete-modal')">Cancelar</button>
+        <button class="btn btn-danger" onclick="doDelete()">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script>
+    requireAdmin();
+    renderSidebar("users");
+
+    async function loadUsers() {
+      const { data } = await apiRequest("/users");
+      const tbody = document.getElementById("tbody");
+      tbody.innerHTML = (data || []).map(u => `
+        <tr>
+          <td>${u.id}</td>
+          <td>${u.first_name} ${u.last_name}</td>
+          <td>${u.username}</td>
+          <td>${u.cpf}</td>
+          <td>${roleBadge(u.user_type)}</td>
+          <td class="actions">
+            <button class="btn btn-sm btn-primary" onclick="openEdit(${u.id})">✏️</button>
+            <button class="btn btn-sm btn-orange" onclick="openPromote(${u.id},'${u.first_name} ${u.last_name}')">⬆️</button>
+            <button class="btn btn-sm btn-danger" onclick="openDelete(${u.id},'${u.username}')">🗑️</button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.remove("show"); }
+
+    async function openEdit(id) {
+      const { data } = await apiRequest(`/users/${id}`);
+      if (!data) return;
+      document.getElementById("edit-id").value = data.id;
+      document.getElementById("edit-username").value = data.username;
+      document.getElementById("edit-first").value = data.first_name;
+      document.getElementById("edit-last").value = data.last_name;
+      document.getElementById("edit-cpf").value = data.cpf;
+      document.getElementById("edit-role").value = data.role_id;
+      document.getElementById("edit-pass").value = "";
+      document.getElementById("edit-alert").className = "alert";
+      document.getElementById("edit-modal").classList.add("show");
+    }
+
+    document.getElementById("edit-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("edit-id").value;
+      const alert = document.getElementById("edit-alert");
+      const roleId = parseInt(document.getElementById("edit-role").value);
+      const userTypes = { 1: "Admin", 2: "Funcionario", 3: "Gerente" };
+
+      const body = {
+        username: document.getElementById("edit-username").value,
+        password_hash: document.getElementById("edit-pass").value,
+        user_type: userTypes[roleId],
+        first_name: document.getElementById("edit-first").value,
+        last_name: document.getElementById("edit-last").value,
+        birth_date: "2000-01-01",
+        cpf: document.getElementById("edit-cpf").value,
+        role_id: roleId,
+      };
+
+      const { data } = await apiRequest(`/users/update/${id}`, { method: "PUT", body: JSON.stringify(body) });
+      if (data?.success) {
+        alert.textContent = "Atualizado!"; alert.className = "alert alert-success show";
+        setTimeout(() => { closeModal("edit-modal"); loadUsers(); }, 800);
+      } else {
+        alert.textContent = data?.message || "Erro"; alert.className = "alert alert-error show";
+      }
+    });
+
+    function openPromote(id, name) {
+      document.getElementById("promote-id").value = id;
+      document.getElementById("promote-name").textContent = `Usuário: ${name}`;
+      document.getElementById("promote-alert").className = "alert";
+      document.getElementById("promote-modal").classList.add("show");
+    }
+
+    async function doPromote() {
+      const id = parseInt(document.getElementById("promote-id").value);
+      const role = parseInt(document.getElementById("promote-role").value);
+      const alert = document.getElementById("promote-alert");
+      const { data, status } = await apiRequest("/users/promote", {
+        method: "POST", body: JSON.stringify({ users_id: id, new_role_id: role })
+      });
+      if (status === 200 && data?.success) {
+        alert.textContent = "Promovido!"; alert.className = "alert alert-success show";
+        setTimeout(() => { closeModal("promote-modal"); loadUsers(); }, 800);
+      } else {
+        alert.textContent = data?.message || "Erro ao promover"; alert.className = "alert alert-error show";
+      }
+    }
+
+    function openDelete(id, name) {
+      document.getElementById("delete-id").value = id;
+      document.getElementById("delete-msg").textContent = `Tem certeza que deseja excluir "${name}"?`;
+      document.getElementById("delete-modal").classList.add("show");
+    }
+
+    async function doDelete() {
+      const id = document.getElementById("delete-id").value;
+      await apiRequest(`/users/delete/${id}`, { method: "DELETE" });
+      closeModal("delete-modal");
+      loadUsers();
+    }
+
+    loadUsers();
+  </script>
+</body>
+</html>

@@ -6,6 +6,8 @@
 // Função que organiza a estrutura das rotas principais da API
 use axum::{routing::{get, post, put, delete}, Router, response::IntoResponse, Json};
 use serde_json::json;
+use tower_http::cors::{CorsLayer, Any};
+use tower_http::services::ServeDir;
 use crate::handlers::auth_handler;
 use crate::handlers::product_handler;
 use crate::handlers::stock_handler;
@@ -18,6 +20,11 @@ async fn health_check() -> impl IntoResponse {
 
 /// Cria e retorna o router com todas as rotas da aplicação.
 pub fn create_routes() -> Router<MySqlPool> {
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any);
+
     Router::new()
         // Rota de Health Check
         .route("/", get(health_check))
@@ -56,4 +63,8 @@ pub fn create_routes() -> Router<MySqlPool> {
         .route("/reports/critical", get(stock_handler::critical_stock_report))
         .route("/reports/alerts", get(stock_handler::consumption_alert))
         .route("/reports/low-stock", get(stock_handler::low_stock_warnings))
+        // Servir frontend estático
+        .nest_service("/app", ServeDir::new("frontend"))
+        // CORS
+        .layer(cors)
 }
