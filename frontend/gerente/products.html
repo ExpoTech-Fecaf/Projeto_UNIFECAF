@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerente — Produtos</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <div class="page-header">
+        <h1>Produtos</h1>
+        <a href="product-create.html" class="btn btn-primary">➕ Novo Produto</a>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Nome</th><th>Custo</th><th>Venda</th><th>Estoque</th><th>Peso(g)</th><th>Status</th><th>Produção</th><th>Validade</th><th>Ações</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal Editar -->
+  <div class="modal-overlay" id="edit-modal">
+    <div class="modal">
+      <h2>Editar Produto</h2>
+      <form id="edit-form">
+        <input type="hidden" id="edit-id">
+        <div class="form-group"><label>Nome</label><input id="edit-name" required></div>
+        <div class="form-group"><label>Preço de Custo</label><input type="number" step="0.01" id="edit-cost" required></div>
+        <div class="form-group"><label>Preço de Venda</label><input type="number" step="0.01" id="edit-sale" required></div>
+        <div class="form-group"><label>Estoque</label><input type="number" id="edit-stock" required></div>
+        <div class="form-group"><label>Peso (gramas)</label><input type="number" id="edit-weight" required></div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="edit-status"><option value="1">Ativo</option><option value="2">Inativo</option></select>
+        </div>
+        <div id="edit-alert" class="alert"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('edit-modal')">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Excluir -->
+  <div class="modal-overlay" id="delete-modal">
+    <div class="modal">
+      <h2>Confirmar Exclusão</h2>
+      <p id="delete-msg"></p>
+      <input type="hidden" id="delete-id">
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('delete-modal')">Cancelar</button>
+        <button class="btn btn-danger" onclick="doDelete()">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/sidebar-gerente.js"></script>
+  <script>
+    requireGerente();
+    renderSidebarGerente("products");
+
+    let productsCache = [];
+
+    async function loadProducts() {
+      const { data } = await apiRequest("/products");
+      productsCache = data || [];
+      document.getElementById("tbody").innerHTML = productsCache.map(p => `
+        <tr>
+          <td>${p.id}</td>
+          <td>${p.name}</td>
+          <td>R$ ${p.cost_price.toFixed(2)}</td>
+          <td>R$ ${p.sale_price.toFixed(2)}</td>
+          <td>${p.current_stock}</td>
+          <td>${p.weight_grams}</td>
+          <td>${p.status === 1 ? '✅ Ativo' : '❌ Inativo'}</td>
+          <td>${p.production_date}</td>
+          <td>${p.expiration_date}</td>
+          <td class="actions">
+            <button class="btn btn-sm btn-primary" onclick="openEdit(${p.id})">✏️</button>
+            <button class="btn btn-sm btn-danger" onclick="openDelete(${p.id},'${p.name}')">🗑️</button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.remove("show"); }
+
+    async function openEdit(id) {
+      const { data } = await apiRequest(`/products/${id}`);
+      if (!data) return;
+      document.getElementById("edit-id").value = data.id;
+      document.getElementById("edit-name").value = data.name;
+      document.getElementById("edit-cost").value = data.cost_price;
+      document.getElementById("edit-sale").value = data.sale_price;
+      document.getElementById("edit-stock").value = data.current_stock;
+      document.getElementById("edit-weight").value = data.weight_grams;
+      document.getElementById("edit-status").value = data.status;
+      document.getElementById("edit-alert").className = "alert";
+      document.getElementById("edit-modal").classList.add("show");
+    }
+
+    document.getElementById("edit-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("edit-id").value;
+      const alert = document.getElementById("edit-alert");
+      const original = productsCache.find(p => p.id == id);
+
+      const body = {
+        id: parseInt(id),
+        name: document.getElementById("edit-name").value,
+        cost_price: parseFloat(document.getElementById("edit-cost").value),
+        sale_price: parseFloat(document.getElementById("edit-sale").value),
+        current_stock: parseInt(document.getElementById("edit-stock").value),
+        weight_grams: parseInt(document.getElementById("edit-weight").value),
+        status: parseInt(document.getElementById("edit-status").value),
+        production_date: original?.production_date || "2025-01-01",
+        expiration_date: original?.expiration_date || "2026-01-01",
+        entry_date: original?.entry_date || "2025-01-01",
+      };
+
+      const { data } = await apiRequest(`/products/update/${id}`, { method: "PUT", body: JSON.stringify(body) });
+      if (data?.success) {
+        alert.textContent = "Atualizado!"; alert.className = "alert alert-success show";
+        setTimeout(() => { closeModal("edit-modal"); loadProducts(); }, 800);
+      } else {
+        alert.textContent = data?.message || "Erro"; alert.className = "alert alert-error show";
+      }
+    });
+
+    function openDelete(id, name) {
+      document.getElementById("delete-id").value = id;
+      document.getElementById("delete-msg").textContent = `Tem certeza que deseja excluir "${name}"?`;
+      document.getElementById("delete-modal").classList.add("show");
+    }
+
+    async function doDelete() {
+      const id = document.getElementById("delete-id").value;
+      await apiRequest(`/products/delete/${id}`, { method: "DELETE" });
+      closeModal("delete-modal");
+      loadProducts();
+    }
+
+    loadProducts();
+  </script>
+</body>
+</html>

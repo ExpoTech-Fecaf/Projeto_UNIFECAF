@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerente — Alertas de Consumo</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <div class="page-header"><h1>⚠️ Alertas de Consumo por Dia</h1></div>
+      <div id="info" style="margin-bottom:1rem;"></div>
+      <div class="cards-grid" id="content"><p>Carregando...</p></div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/sidebar-gerente.js"></script>
+  <script>
+    requireGerente();
+    renderSidebarGerente("report-alerts");
+
+    (async () => {
+      const { data } = await apiRequest("/reports/alerts");
+      const container = document.getElementById("content");
+      const info = document.getElementById("info");
+
+      if (!data?.success) { container.innerHTML = `<p>Erro ao carregar alertas.</p>`; return; }
+
+      info.innerHTML = `<div class="report-card">
+        <p><strong>Dia:</strong> ${data.dia_semana} | <strong>Nível:</strong> ${data.nivel_movimento}</p>
+        <p>Total de produtos: ${data.total_produtos} | Em alerta: <strong style="color:#b71c1c;">${data.produtos_em_alerta}</strong></p>
+      </div>`;
+
+      const alertas = (data.data || []).filter(p => p.alerta);
+      if (alertas.length === 0) { container.innerHTML = `<p>Nenhum produto em alerta.</p>`; return; }
+
+      container.innerHTML = alertas.map(p => `
+        <div class="report-card warning">
+          <h3>${p.product_name || p.nome}</h3>
+          <p>Estoque atual: <strong>${p.current_stock ?? p.estoque_atual}</strong></p>
+          <p>Mín. original: ${p.min_stock ?? p.min_estoque} | Mín. ajustado: ${p.adjusted_min ?? p.min_ajustado}</p>
+          <p style="font-size:0.8rem;color:var(--gray);margin-top:0.3rem;">${p.mensagem || ''}</p>
+        </div>
+      `).join("");
+    })();
+  </script>
+</body>
+</html>

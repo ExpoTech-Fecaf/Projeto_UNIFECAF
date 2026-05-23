@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerente — Dashboard</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <div class="page-header"><h1>Dashboard Gerente</h1></div>
+      <div class="cards-grid" id="stats"></div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/sidebar-gerente.js"></script>
+  <script>
+    requireGerente();
+    renderSidebarGerente("dashboard");
+
+    (async () => {
+      const [products, critical, lowStock] = await Promise.all([
+        apiRequest("/products"),
+        apiRequest("/reports/critical"),
+        apiRequest("/reports/low-stock"),
+      ]);
+
+      const totalProducts = products.data?.length || 0;
+      const totalCritical = critical.data?.data?.length || 0;
+      const totalLow = lowStock.data?.total_avisos || 0;
+
+      document.getElementById("stats").innerHTML = `
+        <div class="report-card">
+          <p>Produtos cadastrados</p>
+          <div class="stock-value">${totalProducts}</div>
+        </div>
+        <div class="report-card critical">
+          <p>Estoque crítico (≤ 5 un.)</p>
+          <div class="stock-value low">${totalCritical}</div>
+        </div>
+        <div class="report-card warning">
+          <p>Avisos de estoque baixo</p>
+          <div class="stock-value">${totalLow}</div>
+        </div>
+      `;
+    })();
+  </script>
+</body>
+</html>

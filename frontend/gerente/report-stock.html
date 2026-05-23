@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerente — Relatório de Estoque</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <div class="page-header"><h1>📦 Relatório de Estoque</h1></div>
+      <div id="content"><p>Carregando...</p></div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/sidebar-gerente.js"></script>
+  <script>
+    requireGerente();
+    renderSidebarGerente("report-stock");
+
+    (async () => {
+      const { data } = await apiRequest("/reports/stock");
+      const container = document.getElementById("content");
+      if (!data?.success || !data.data) { container.innerHTML = `<p>Erro ao carregar relatório.</p>`; return; }
+
+      container.innerHTML = data.data.map(p => `
+        <div class="report-card" style="margin-bottom:1rem;">
+          <h3>${p.product_name || p.name || 'Produto'} (ID: ${p.product_id || p.id})</h3>
+          <p>Status: ${p.status === 1 ? '✅ Ativo' : '❌ Inativo'} | Estoque total: <strong>${p.total_stock ?? p.current_stock ?? 0}</strong></p>
+          ${p.batches ? `<table style="margin-top:0.5rem;width:100%;font-size:0.8rem;">
+            <tr><th>Lote</th><th>Qtd</th><th>Entrada</th></tr>
+            ${p.batches.map(b => `<tr><td>${b.batch_id || b.id}</td><td>${b.quantity || b.current_stock}</td><td>${b.entry_date}</td></tr>`).join("")}
+          </table>` : ''}
+        </div>
+      `).join("");
+    })();
+  </script>
+</body>
+</html>

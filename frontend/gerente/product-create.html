@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerente — Cadastrar Produto</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <div class="page-header"><h1>Cadastrar Produto</h1></div>
+      <div class="card" style="max-width:520px; text-align:left;">
+        <form id="form">
+          <div class="form-group"><label>Nome</label><input id="name" required></div>
+          <div class="form-group"><label>Preço de Custo (R$)</label><input type="number" step="0.01" id="cost_price" required></div>
+          <div class="form-group"><label>Preço de Venda (R$)</label><input type="number" step="0.01" id="sale_price" required></div>
+          <div class="form-group"><label>Estoque Inicial</label><input type="number" id="current_stock" value="0" required></div>
+          <div class="form-group"><label>Peso (gramas)</label><input type="number" id="weight_grams" required></div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="status"><option value="1" selected>Ativo</option><option value="2">Inativo</option></select>
+          </div>
+          <div class="form-group"><label>Data de Produção (dd/mm/YYYY)</label><input id="production_date" placeholder="01/01/2025" required></div>
+          <div class="form-group"><label>Data de Validade (dd/mm/YYYY)</label><input id="expiration_date" placeholder="01/01/2026" required></div>
+          <button type="submit" class="btn btn-primary btn-full">Cadastrar</button>
+        </form>
+        <div id="alert" class="alert"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/sidebar-gerente.js"></script>
+  <script>
+    requireGerente();
+    renderSidebarGerente("product-create");
+
+    document.getElementById("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const alert = document.getElementById("alert");
+      alert.className = "alert";
+
+      const body = {
+        name: document.getElementById("name").value.trim(),
+        cost_price: parseFloat(document.getElementById("cost_price").value),
+        sale_price: parseFloat(document.getElementById("sale_price").value),
+        current_stock: parseInt(document.getElementById("current_stock").value),
+        weight_grams: parseInt(document.getElementById("weight_grams").value),
+        status: parseInt(document.getElementById("status").value),
+        production_date: document.getElementById("production_date").value.trim(),
+        expiration_date: document.getElementById("expiration_date").value.trim(),
+      };
+
+      const { data } = await apiRequest("/products/create", { method: "POST", body: JSON.stringify(body) });
+      if (data?.success) {
+        alert.textContent = `Produto criado com ID: ${data.id}`;
+        alert.className = "alert alert-success show";
+        e.target.reset();
+      } else {
+        alert.textContent = data?.message || "Erro ao cadastrar";
+        alert.className = "alert alert-error show";
+      }
+    });
+  </script>
+</body>
+</html>

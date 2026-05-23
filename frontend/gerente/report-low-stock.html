@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerente — Estoque Baixo</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <div class="page-header"><h1>📉 Avisos de Estoque Baixo</h1></div>
+      <p style="color:var(--gray);margin-bottom:1rem;">Produtos com estoque abaixo do mínimo definido</p>
+      <div class="cards-grid" id="content"><p>Carregando...</p></div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/sidebar-gerente.js"></script>
+  <script>
+    requireGerente();
+    renderSidebarGerente("report-low-stock");
+
+    (async () => {
+      const { data } = await apiRequest("/reports/low-stock");
+      const container = document.getElementById("content");
+      if (!data?.success || !data.data || data.data.length === 0) {
+        container.innerHTML = `<div class="report-card"><p>Nenhum produto com estoque baixo. 🎉</p></div>`;
+        return;
+      }
+      container.innerHTML = data.data.map(p => `
+        <div class="report-card warning">
+          <h3>${p.product_name}</h3>
+          <p>Estoque atual: <strong class="stock-value low">${p.current_stock}</strong></p>
+          <p>Estoque mínimo: ${p.min_stock}</p>
+          <p style="font-size:0.8rem;color:var(--gray);margin-top:0.3rem;">${p.mensagem}</p>
+        </div>
+      `).join("");
+    })();
+  </script>
+</body>
+</html>

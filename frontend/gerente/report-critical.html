@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerente — Estoque Crítico</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <div class="page-header"><h1>🚨 Estoque Crítico</h1></div>
+      <p style="color:var(--gray);margin-bottom:1rem;">Produtos com estoque ≤ 5 unidades</p>
+      <div class="cards-grid" id="content"><p>Carregando...</p></div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/sidebar-gerente.js"></script>
+  <script>
+    requireGerente();
+    renderSidebarGerente("report-critical");
+
+    (async () => {
+      const { data } = await apiRequest("/reports/critical");
+      const container = document.getElementById("content");
+      if (!data?.success || !data.data || data.data.length === 0) {
+        container.innerHTML = `<div class="report-card"><p>Nenhum produto em estoque crítico. 🎉</p></div>`;
+        return;
+      }
+      container.innerHTML = data.data.map(p => `
+        <div class="report-card critical">
+          <h3>${p.product_name || p.name}</h3>
+          <div class="stock-value low">${p.total_stock ?? p.current_stock ?? 0} un.</div>
+          <p>Reposição necessária</p>
+        </div>
+      `).join("");
+    })();
+  </script>
+</body>
+</html>

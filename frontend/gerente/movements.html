@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerente — Movimentações</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <div class="page-header"><h1>🔄 Histórico de Movimentações</h1></div>
+
+      <div class="search-bar">
+        <input type="number" id="filter-product" placeholder="Filtrar por Product ID (opcional)">
+        <button class="btn btn-primary" onclick="loadMovements()">Filtrar</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('filter-product').value='';loadMovements()">Limpar</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Produto ID</th><th>Lote ID</th><th>Usuário ID</th><th>Tipo</th><th>Qtd</th><th>Data/Hora</th><th>Observações</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/sidebar-gerente.js"></script>
+  <script>
+    requireGerente();
+    renderSidebarGerente("movements");
+
+    async function loadMovements() {
+      const productId = document.getElementById("filter-product").value.trim();
+      const endpoint = productId ? `/movements/product/${productId}` : "/movements";
+      const { data } = await apiRequest(endpoint);
+      const movements = data?.data || [];
+
+      document.getElementById("tbody").innerHTML = movements.map(m => `
+        <tr>
+          <td>${m.id}</td>
+          <td>${m.product_id}</td>
+          <td>${m.batch_id || '-'}</td>
+          <td>${m.user_id}</td>
+          <td><span class="badge ${m.movement_type === 'entrada' ? 'badge-gerente' : 'badge-funcionario'}">${m.movement_type}</span></td>
+          <td>${m.quantity}</td>
+          <td>${m.created_at || '-'}</td>
+          <td>${m.notes || '-'}</td>
+        </tr>
+      `).join("") || `<tr><td colspan="8" style="text-align:center;">Nenhuma movimentação encontrada</td></tr>`;
+    }
+
+    loadMovements();
+  </script>
+</body>
+</html>

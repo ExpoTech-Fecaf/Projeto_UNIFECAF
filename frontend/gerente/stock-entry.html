@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerente — Entrada de Estoque</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <div class="page-header"><h1>📥 Entrada de Estoque</h1></div>
+      <div class="card" style="max-width:520px; text-align:left;">
+        <form id="form">
+          <div class="form-group"><label>Nome do Produto</label><input id="product_name" required placeholder="Ex: Arroz Integral 1kg"></div>
+          <div class="form-group"><label>Quantidade</label><input type="number" id="quantity" min="1" required></div>
+          <div class="form-group"><label>Observações (opcional)</label><input id="notes" placeholder="Reposição de fornecedor"></div>
+          <button type="submit" class="btn btn-primary btn-full">Registrar Entrada</button>
+        </form>
+        <div id="alert" class="alert"></div>
+        <div id="result" style="display:none; margin-top:1rem;" class="report-card">
+          <p id="res-msg"></p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/sidebar-gerente.js"></script>
+  <script>
+    const user = requireGerente();
+    renderSidebarGerente("stock-entry");
+
+    document.getElementById("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const alert = document.getElementById("alert");
+      const result = document.getElementById("result");
+      alert.className = "alert";
+      result.style.display = "none";
+
+      const body = {
+        product_name: document.getElementById("product_name").value.trim(),
+        quantity: parseInt(document.getElementById("quantity").value),
+        user_id: user?.user_id || 1,
+        notes: document.getElementById("notes").value.trim() || null,
+      };
+
+      const { data } = await apiRequest("/products/stock/entry", { method: "POST", body: JSON.stringify(body) });
+      if (data?.success) {
+        alert.textContent = data.message;
+        alert.className = "alert alert-success show";
+        document.getElementById("res-msg").innerHTML = `
+          <strong>${data.product_name}</strong><br>
+          Quantidade adicionada: ${data.quantity_added}<br>
+          Estoque total: <strong>${data.total_stock}</strong>
+        `;
+        result.style.display = "block";
+        e.target.reset();
+      } else {
+        alert.textContent = data?.message || "Erro ao registrar entrada";
+        alert.className = "alert alert-error show";
+      }
+    });
+  </script>
+</body>
+</html>

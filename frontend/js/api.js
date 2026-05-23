@@ -15,7 +15,25 @@ function getUser() {
 function requireAdmin() {
   const u = getUser();
   if (!u || u.user_type !== "Admin") {
-    window.location.href = "login.html";
+    window.location.href = "../login.html";
+    return null;
+  }
+  return u;
+}
+
+function requireGerente() {
+  const u = getUser();
+  if (!u || u.user_type !== "Gerente") {
+    window.location.href = "../login.html";
+    return null;
+  }
+  return u;
+}
+
+function requireAuth(allowedTypes) {
+  const u = getUser();
+  if (!u || !allowedTypes.includes(u.user_type)) {
+    window.location.href = "../login.html";
     return null;
   }
   return u;
@@ -23,7 +41,7 @@ function requireAdmin() {
 
 function logout() {
   localStorage.removeItem("user");
-  window.location.href = "login.html";
+  window.location.href = "../login.html";
 }
 
 function roleBadge(type) {
