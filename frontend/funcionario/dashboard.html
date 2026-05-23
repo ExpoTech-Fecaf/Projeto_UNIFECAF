@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Funcionário — Dashboard</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <div class="page-header"><h1>Dashboard Funcionário</h1></div>
+      <div class="cards-grid">
+        <a href="stock-exit.html" class="report-card" style="text-decoration:none;color:inherit;">
+          <h3>📤 Retirada de Estoque</h3>
+          <p>Registrar saída de produtos (FIFO)</p>
+        </a>
+        <a href="stock-search.html" class="report-card" style="text-decoration:none;color:inherit;">
+          <h3>🔍 Consultar Estoque</h3>
+          <p>Verificar quantidade disponível por produto</p>
+        </a>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/sidebar-funcionario.js"></script>
+  <script>
+    requireAuth(["Funcionario"]);
+    renderSidebarFuncionario("dashboard");
+  </script>
+</body>
+</html>

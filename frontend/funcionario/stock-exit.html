@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Funcionário — Retirada de Estoque</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <div class="page-header"><h1>📤 Retirada de Estoque (FIFO)</h1></div>
+      <div class="card" style="max-width:520px; text-align:left;">
+        <form id="form">
+          <div class="form-group"><label>Nome do Produto</label><input id="product_name" required placeholder="Ex: Pão de Hambúrguer"></div>
+          <div class="form-group"><label>Quantidade</label><input type="number" id="quantity" min="1" required></div>
+          <div class="form-group"><label>Observações (opcional)</label><input id="notes" placeholder="Venda para cliente X"></div>
+          <button type="submit" class="btn btn-primary btn-full">Registrar Saída</button>
+        </form>
+        <div id="alert" class="alert"></div>
+        <div id="result" style="display:none; margin-top:1rem;"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/sidebar-funcionario.js"></script>
+  <script>
+    const user = requireAuth(["Funcionario"]);
+    renderSidebarFuncionario("stock-exit");
+
+    document.getElementById("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const alert = document.getElementById("alert");
+      const result = document.getElementById("result");
+      alert.className = "alert";
+      result.style.display = "none";
+
+      const body = {
+        product_name: document.getElementById("product_name").value.trim(),
+        quantity: parseInt(document.getElementById("quantity").value),
+        user_id: user?.user_id || 1,
+        notes: document.getElementById("notes").value.trim() || null,
+      };
+
+      const { data } = await apiRequest("/products/stock/exit", { method: "POST", body: JSON.stringify(body) });
+      if (data?.success) {
+        alert.textContent = data.message;
+        alert.className = "alert alert-success show";
+
+        let html = `<div class="report-card" style="margin-bottom:0.5rem;">
+          <p><strong>${data.product_name}</strong></p>
+          <p>Retirado: ${data.quantity_removed} | Restante: <strong>${data.remaining_stock}</strong></p>
+        </div>`;
+
+        if (data.aviso_estoque_baixo?.alerta) {
+          html += `<div class="report-card warning" style="margin-bottom:0.5rem;">
+            <p>${data.aviso_estoque_baixo.mensagem}</p>
+          </div>`;
+        }
+        if (data.aviso_consumo_elevado?.alerta) {
+          html += `<div class="report-card critical" style="margin-bottom:0.5rem;">
+            <p>${data.aviso_consumo_elevado.mensagem}</p>
+          </div>`;
+        }
+
+        result.innerHTML = html;
+        result.style.display = "block";
+        e.target.reset();
+      } else {
+        alert.textContent = data?.message || "Erro ao registrar saída";
+        alert.className = "alert alert-error show";
+      }
+    });
+  </script>
+</body>
+</html>
