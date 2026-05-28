@@ -1,4 +1,4 @@
-1. Roles (perfis de acesso)
+-- 1. Roles (perfis de acesso)
 CREATE TABLE roles (
     id   SMALLINT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(50) NOT NULL UNIQUE

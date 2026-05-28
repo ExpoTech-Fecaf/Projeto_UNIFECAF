@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: test_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Install Rust stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Install MySQL client
+        run: sudo apt-get update && sudo apt-get install -y default-mysql-client
+
+      - name: Wait for MySQL
+        run: |
+          for i in {1..60}; do
+            if mysqladmin ping -h127.0.0.1 -uroot -ppassword --silent; then
+              echo "MySQL is up";
+              break;
+            fi
+            echo "Waiting for MySQL... ($i)";
+            sleep 1;
+          done
+
+      - name: Apply DB schema
+        env:
+          MYSQL_PWD: password
+        run: |
+          if [ -f src/database/db_estoque.sql ]; then
+            mysql -h127.0.0.1 -uroot test_db < src/database/db_estoque.sql
+          else
+            echo "No schema file found: src/database/db_estoque.sql";
+          fi
+
+      - name: Run tests
+        env:
+          DATABASE_URL: mysql://root:password@127.0.0.1:3306/test_db
+        run: cargo test --all --verbose
+
+# If you need integration tests that require MySQL, uncomment and adapt the
+# service below, ensure migrations are applied and `DATABASE_URL` is set.
+#
+#    services:
+#      mysql:
+#        image: mysql:8
+#        env:
+#          MYSQL_ROOT_PASSWORD: password
+#          MYSQL_DATABASE: test_db
+#        ports:
+#          - 3306:3306
+#        options: >-
+#          --health-cmd="mysqladmin ping --silent"
+#          --health-interval=10s
+#          --health-timeout=5s
+#          --health-retries=3

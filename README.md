@@ -170,3 +170,28 @@ Para detalhes profundos sobre diagramas de blocos,arquitetura SQLx e modelos de 
 Desenvolvido como projeto acadêmico pela Equipe da Turma 3ADS.NA.
 
 Caso encontre bugs ou queira sugerir melhorias, sinta-se à vontade para abrir uma Issue.
+
+## 🧪 Testes
+
+O projeto contém testes unitários localizados na pasta `tests/` e pode ser executado com o comando padrão do Cargo:
+
+```bash
+cargo test
+```
+
+Notas importantes:
+- Testes unitários que não dependem de banco de dados rodam sem configuração adicional.
+- Testes que interagem com o banco (integração) exigem uma instância MySQL e a variável `DATABASE_URL` corretamente configurada no arquivo `.env` ou no ambiente.
+- Para rodar um único arquivo de teste use:
+
+```bash
+cargo test --test nome_do_teste
+```
+
+Exemplo para rodar apenas os testes de validadores:
+
+```bash
+cargo test --test validators_test
+```
+
+Se quiser que eu adicione testes de integração (requere MySQL), posso criar scripts de inicialização e fixtures para facilitar a execução em ambiente local ou via Docker.
