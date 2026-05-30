@@ -47,12 +47,12 @@ pub fn create_routes() -> Router<MySqlPool> {
         .route("/products/create", post(product_handler::create_product))
         .route("/products/update/{id}", put(product_handler::update_product))
         .route("/products/delete/{id}", delete(product_handler::delete_product))
-        .route("/products/{id}", get(product_handler::get_product))
 
         // Rotas para movimentação de estoque
         .route("/products/stock/entry", post(stock_handler::stock_entry))
         .route("/products/stock/exit", post(stock_handler::stock_exit))
         .route("/products/stock/{name}", get(stock_handler::get_stock))
+        .route("/products/{id}", get(product_handler::get_product))
 
         // Histórico de movimentações
         .route("/movements", get(stock_handler::list_movements))

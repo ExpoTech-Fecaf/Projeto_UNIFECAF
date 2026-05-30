@@ -45,8 +45,8 @@
       result.style.display = "none";
       if (!name) { alert.textContent = "Digite o nome do produto"; alert.className = "alert alert-error show"; return; }
 
-      const { data } = await apiRequest(`/products/stock/${encodeURIComponent(name)}`);
-      if (data && data.total_stock !== undefined) {
+      const { status, data, error } = await apiRequest(`/products/stock/${encodeURIComponent(name)}`);
+      if (status === 200 && data && data.total_stock !== undefined) {
         document.getElementById("res-name").textContent = data.product_name;
         document.getElementById("res-total").textContent = data.total_stock;
         document.getElementById("res-batches").innerHTML = (data.batches || []).map(b => `
@@ -54,7 +54,7 @@
         `).join("");
         result.style.display = "block";
       } else {
-        alert.textContent = data?.message || "Produto não encontrado";
+        alert.textContent = data?.message || error || "Produto não encontrado";
         alert.className = "alert alert-error show";
       }
     }

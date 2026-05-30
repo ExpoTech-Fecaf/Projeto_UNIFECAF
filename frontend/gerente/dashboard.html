@@ -22,30 +22,41 @@
     renderSidebarGerente("dashboard");
 
     (async () => {
-      const [products, critical, lowStock] = await Promise.all([
-        apiRequest("/products"),
-        apiRequest("/reports/critical"),
-        apiRequest("/reports/low-stock"),
-      ]);
+      try {
+        const [products, critical, lowStock] = await Promise.all([
+          apiRequest("/products"),
+          apiRequest("/reports/critical"),
+          apiRequest("/reports/low-stock"),
+        ]);
 
-      const totalProducts = products.data?.length || 0;
-      const totalCritical = critical.data?.data?.length || 0;
-      const totalLow = lowStock.data?.total_avisos || 0;
+        const totalProducts = products.status === 200 ? products.data?.length || 0 : 0;
+        const totalCritical = critical.status === 200 ? critical.data?.data?.length || 0 : 0;
+        const totalLow = lowStock.status === 200 ? lowStock.data?.total_avisos || 0 : 0;
+        const hasError = products.status !== 200 || critical.status !== 200 || lowStock.status !== 200;
 
-      document.getElementById("stats").innerHTML = `
-        <div class="report-card">
-          <p>Produtos cadastrados</p>
-          <div class="stock-value">${totalProducts}</div>
-        </div>
-        <div class="report-card critical">
-          <p>Estoque crítico (≤ 5 un.)</p>
-          <div class="stock-value low">${totalCritical}</div>
-        </div>
-        <div class="report-card warning">
-          <p>Avisos de estoque baixo</p>
-          <div class="stock-value">${totalLow}</div>
-        </div>
-      `;
+        document.getElementById("stats").innerHTML = `
+          <div class="report-card">
+            <p>Produtos cadastrados</p>
+            <div class="stock-value">${totalProducts}</div>
+          </div>
+          <div class="report-card critical">
+            <p>Estoque crítico (≤ 5 un.)</p>
+            <div class="stock-value low">${totalCritical}</div>
+          </div>
+          <div class="report-card warning">
+            <p>Avisos de estoque baixo</p>
+            <div class="stock-value">${totalLow}</div>
+          </div>
+          ${hasError ? `<div class="report-card alert-error"><p>Erro ao carregar informações do dashboard. Atualize a página ou verifique o servidor.</p></div>` : ''}
+        `;
+      } catch (error) {
+        console.error("Erro ao carregar dashboard", error);
+        document.getElementById("stats").innerHTML = `
+          <div class="report-card alert-error">
+            <p>Erro ao carregar o dashboard. Verifique se a API está ativa.</p>
+          </div>
+        `;
+      }
     })();
   </script>
 </body>

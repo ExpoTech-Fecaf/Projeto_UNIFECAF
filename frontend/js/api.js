@@ -3,8 +3,20 @@ const API_BASE = "http://localhost:3001";
 async function apiRequest(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint}`;
   const config = { headers: { "Content-Type": "application/json" }, ...options };
-  const res = await fetch(url, config);
-  return { status: res.status, data: await res.json().catch(() => null) };
+  try {
+    const res = await fetch(url, config);
+    const text = await res.text();
+    let data = null;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = null;
+    }
+    return { status: res.status, data };
+  } catch (error) {
+    console.error("API request failed", error);
+    return { status: 0, data: null, error: error?.message || "Erro de rede" };
+  }
 }
 
 function getUser() {
